@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StockPro — Gestion de stock</title>
+
+<style>
+:root {
+  --nav: #123247;
+  --green: #087f68;
+  --blue: #2c6397;
+  --bg: #f1f5f9;
+  --border: #cddae5;
+  --text: #20394c;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px system-ui, Arial, sans-serif;
+}
+button, input, select { font: inherit; }
+button {
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: white;
+  color: var(--text);
+  cursor: pointer;
+}
+button:disabled { opacity: .5; cursor: default; }
+input, select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #b9cbd8;
+  border-radius: 5px;
+  background: white;
+}
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.primary {
+  background: var(--green);
+  color: white;
+  border-color: var(--green);
+}
+.danger { color: #af2539; }
+.shell {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: 100vh;
+}
+aside {
+  background: var(--nav);
+  color: white;
+  padding: 22px 12px;
+}
+aside h2 { padding-left: 10px; }
+aside button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  color: #d6e7f1;
+  background: transparent;
+  border: 0;
+  margin: 4px 0;
+}
+aside button.active { background: #29566f; }
+main { padding: 22px; min-width: 0; }
+header, .actions {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+header {
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+h1 { font-size: 25px; margin: 0 0 6px; }
+h2 { font-size: 19px; }
+p { line-height: 1.6; }
+.muted { color: #64798a; font-size: 13px; }
+.notice {
+  background: #fff4d9;
+  border: 1px solid #ead6a0;
+  padding: 12px;
+  border-radius: 7px;
+  line-height: 1.6;
+  margin: 16px 0;
+}
+.vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.card {
+  background: white;
+  border: 1px solid #d8e3ec;
+  padding: 20px;
+  border-radius: 9px;
+  min-width: 0;
+}
+.metric { border-left: 5px solid var(--green); }
+.metric strong {
+  display: block;
+  color: var(--green);
+  font-size: 29px;
+  margin-top: 10px;
+}
+.scroll { overflow: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+  font-size: 13px;
+}
+th, td {
+  padding: 11px;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+th { background: var(--blue); color: white; }
+tr:nth-child(even) { background: #edf3f9; }
+.toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.toolbar > * { flex: 1; min-width: 140px; }
+.auth {
+  max-width: 530px;
+  margin: 5vh auto;
+  padding: 28px;
+  background: white;
+  border-radius: 12px;
+}
+.auth input { margin: 5px 0 16px; }
+dialog {
+  width: min(850px, 96vw);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 24px;
+  border: 0;
+  border-radius: 12px;
+}
+dialog::backdrop { background: #102c4099; }
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+}
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+.error { color: #af2037; }
+#print { display: none; }
+
+@media (max-width: 760px) {
+  .shell { display: block; }
+  aside { padding: 12px; }
+  aside h2 { display: none; }
+  aside nav { display: flex; flex-direction: column; }
+  main { padding: 14px; }
+}
+@media print {
+  body > * { display: none !important; }
+  #print {
+    display: block !important;
+    background: white;
+    color: black;
+  }
+  #print table { white-space: normal; }
+  #print th { color: black; background: #eee; }
+  @page { size: A4 landscape; margin: 12mm; }
+}
+</style>
+</head>
+
+<body>
+<div id="app"></div>
+<dialog id="modal"></dialog>
+<div id="print"></div>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+
+const escapeHTML = value => String(value ?? "").replace(
+  /[&<>"']/g,
+  c => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[c])
+);
+
+const KEY = "stockpro_local_v1";
+const uid = () =>
+  Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
+
+const today = () => {
+  const d = new Date();
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, "0"),
+    String(d.getDate()).padStart(2, "0")
+  ].join("-");
+};
+
+const number = value =>
+  Number(value).toLocaleString("fr-FR", {
+    maximumFractionDigits: 3
+  });
+
+let db = null;
+let user = null;
+let page = "dashboard";
+let filters = { q: "", depot: "", from: "", to: "" };
+
+try {
+  db = JSON.parse(localStorage.getItem(KEY) || "null");
+} catch (error) {}
+
+const admin = () => user?.role === "admin";
+
+const titles = {
+  dashboard: "Tableau de bord",
+  entries: "Entrées",
+  outputs: "Sorties et livraisons",
+  transfers: "Transferts",
+  inventory: "Inventaire",
+  products: "Produits",
+  depots: "Dépôts",
+  clients: "Clients",
+  suppliers: "Fournisseurs",
+  users: "Comptes utilisateurs",
+  audit: "Historique",
+  settings: "Paramètres et sauvegarde"
+};
+
+const schemas = {
+  products: [
+    ["name", "Produit", "text", true],
+    ["sku", "Référence / SKU", "text", true],
+    ["unit", "Unité : sac, carton, pièce…", "text", true],
+    ["min", "Seuil de stock bas", "number", true]
+  ],
+  depots: [
+    ["name", "Nom du dépôt", "text", true],
+    ["address", "Adresse"],
+    ["manager", "Responsable"],
+    ["phone", "Téléphone", "tel"]
+  ],
+  clients: [
+    ["name", "Nom du client", "text", true],
+    ["phone", "Téléphone", "tel"],
+    ["address", "Adresse"]
+  ],
+  suppliers: [
+    ["name", "Fournisseur", "text", true],
+    ["phone", "Téléphone", "tel"],
+    ["address", "Adresse"]
+  ],
+  entries: [
+    ["date", "Date", "date", true],
+    ["ref", "N° bon ou facture", "text", true],
+    ["product", "Produit", "products", true],
+    ["packing", "Packing-list"],
+    ["qty", "Quantité reçue", "number", true],
+    ["supplier", "Fournisseur", "suppliers", true],
+    ["depot", "Dépôt", "depots", true],
+    ["lot", "Lot"],
+    ["expiry", "Date d’expiration", "date"],
+    ["driver", "Chauffeur ou trucking"],
+    ["note", "Remarque"]
+  ],
+  outputs: [
+    ["date", "Date de livraison", "date", true],
+    ["invoice", "Facture", "text", true],
+    ["product", "Produit", "products", true],
+    ["invoiceQty", "Qté sur la facture", "number", true],
+    ["client", "Client", "clients", true],
+    ["qty", "Avance : quantité livrée cette fois", "number", true],
+    ["driver", "Chauffeur"],
+    ["plate", "Plaque"],
+    ["ref", "N° bon de livraison", "text", true],
+    ["depot", "Dépôt", "depots", true],
+    ["phone", "Téléphone du chauffeur", "tel"],
+    ["note", "Remarque"]
+  ],
+  transfers: [
+    ["date", "Date", "date", true],
+    ["ref", "N° transfert", "text", true],
+    ["product", "Produit", "products", true],
+    ["source", "Dépôt source", "depots", true],
+    ["dest", "Dépôt destination", "depots", true],
+    ["qty", "Quantité", "number", true],
+    ["driver", "Chauffeur ou trucking"],
+    ["plate", "Plaque"],
+    ["note", "Remarque"]
+  ],
+  adjustments: [
+    ["date", "Date", "date", true],
+    ["product", "Produit", "products", true],
+    ["depot", "Dépôt", "depots", true],
+    ["count", "Quantité physiquement comptée", "number", true],
+    ["note", "Motif obligatoire", "text", true]
+  ],
+  users: [
+    ["name", "Nom complet", "text", true],
+    ["login", "Identifiant", "text", true],
+    ["role", "Rôle", "roles", true],
+    ["password", "Mot de passe : 8 caractères minimum", "password", true]
+  ]
+};
+
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(db));
+}
+
+async function passwordHash(password, salt) {
+  if (!globalThis.crypto?.subtle) {
+    throw new Error(
+      "Ouvrez cette application dans un navigateur récent avec HTTPS."
+    );
+  }
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: new TextEncoder().encode(salt),
+      iterations: 120000,
+      hash: "SHA-256"
+    },
+    key,
+    256
+  );
+
+  return Array.from(new Uint8Array(bits))
+    .map(v => v.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function showLogin() {
+  const setup = !db?.users?.length;
+
+  $("app").innerHTML = `
+    <section class="auth">
+      <h1>StockPro</h1>
+      <p>Gestion de stock · Tableau de bord vertical</p>
+      <div class="notice">
+        Démonstration locale. Les comptes et les données restent
+        dans ce navigateur, même après publication sur Internet.
+        Pas de synchronisation ni de sécurité serveur.
+        Utilisez des données fictives et un mot de passe réservé à cette démo.
+      </div>
+
+      <h2>${setup ? "Créer le premier administrateur" : "Connexion"}</h2>
+
+      <form id="loginForm">
+        ${setup ? `
+          <label>Entreprise</label>
+          <input name="company" required>
+          <label>Votre nom</label>
+          <input name="name" required>
+        ` : ""}
+
+        <label>Identifiant</label>
+        <input name="login" autocomplete="username" required>
+
+        <label>Mot de passe</label>
+        <input
+          name="password"
+          type="password"
+          minlength="8"
+          autocomplete="${setup ? "new-password" : "current-password"}"
+          required
+        >
+
+        <button class="primary" type="submit">
+          ${setup ? "Créer et démarrer" : "Se connecter"}
+        </button>
+
+        <p id="loginError" class="error"></p>
+      </form>
+    </section>
+  `;
+
+  $("loginForm").onsubmit = async event => {
+    event.preventDefault();
+
+    const button = event.target.querySelector("button");
+    button.disabled = true;
+
+    try {
+      const values = Object.fromEntries(new FormData(event.target));
+
+      if (setup) {
+        const salt = uid();
+
+        const account = {
+          id: uid(),
+          name: values.name.trim(),
+          login: values.login.trim().toLowerCase(),
+          role: "admin",
+          salt,
+          hash: await passwordHash(values.password, salt)
+        };
+
+        db = {
+          version: 1,
+          company: values.company.trim(),
+          users: [account],
+          products: [],
+          depots: [],
+          clients: [],
+          suppliers: [],
+          entries: [],
+          outputs: [],
+          transfers: [],
+          adjustments: [],
+          audit: []
+        };
+
+        save();
+        user = account;
+      } else {
+        const account = db.users.find(
+          a => a.login === values.login.trim().toLowerCase()
+        );
+
+        if (
+          !account ||
+          await passwordHash(values.password, account.salt) !== account.hash
+        ) {
+          throw new Error("Identifiant ou mot de passe incorrect.");
+        }
+
+        user = account;
+      }
+
+      render();
+    } catch (error) {
+      $("loginError").textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  };
+}
+
+function itemName(type, id) {
+  return db[type].find(item => item.id === id)?.name || "—";
+}
+
+function stock(product, depot) {
+  const sum = (type, condition) =>
+    db[type]
+      .filter(condition)
+      .reduce(
+        (total, row) =>
+          total + (type === "adjustments" ? row.delta : row.qty),
+        0
+      );
+
+  return (
+    sum("entries", r => r.product === product && r.depot === depot)
+    - sum("outputs", r => r.product === product && r.depot === depot)
+    + sum("transfers", r => r.product === product && r.dest === depot)
+    - sum("transfers", r => r.product === product && r.source === depot)
+    + sum("adjustments", r => r.product === product && r.depot === depot)
+  );
+}
+
+function invoiceKey(row) {
+  return [
+    row.invoice.trim().toLowerCase(),
+    row.client,
+    row.product
+  ].join("|");
+}
+
+function delivered(row) {
+  return db.outputs
+    .filter(item => invoiceKey(item) === invoiceKey(row))
+    .reduce((total, item) => total + item.qty, 0);
+}
+
+function table(headers, rows) {
+  return `
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>${headers.map(h => `<th>${escapeHTML(h)}</th>`).join("")}</tr>
+        </thead>
+        <tbody>
+          ${rows.length
+            ? rows.map(row => `
+                <tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>
+              `).join("")
+            : `<tr><td colspan="${headers.length}">Aucune donnée.</td></tr>`
+          }
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function panel(title, content) {
+  return `
+    <section class="card">
+      <h2>${title}</h2>
+      ${content}
+    </section>
+  `;
+}
+
+function matches(row) {
+  const text = [
+    JSON.stringify(row),
+    row.product ? itemName("products", row.product) : "",
+    row.client ? itemName("clients", row.client) : ""
+  ].join(" ").toLowerCase();
+
+  return (
+    (!filters.q || text.includes(filters.q.toLowerCase())) &&
+    (
+      !filters.depot ||
+      [row.depot, row.source, row.dest].includes(filters.depot)
+    ) &&
+    (!row.date || !filters.from || row.date >= filters.from) &&
+    (!row.date || !filters.to || row.date <= filters.to)
+  );
+}
+
+function filterBar() {
+  return `
+    <div class="toolbar">
+      <input
+        aria-label="Recherche"
+        placeholder="Rechercher…"
+        value="${escapeHTML(filters.q)}"
+        onchange="setFilter('q', this.value)"
+      >
+
+      <select aria-label="Dépôt" onchange="setFilter('depot', this.value)">
+        <option value="">Tous les dépôts</option>
+        ${db.depots.map(depot => `
+          <option
+            value="${depot.id}"
+            ${filters.depot === depot.id ? "selected" : ""}
+          >${escapeHTML(depot.name)}</option>
+        `).join("")}
+      </select>
+
+      <input
+        type="date"
+        aria-label="Du"
+        title="Du"
+        value="${escapeHTML(filters.from)}"
+        onchange="setFilter('from', this.value)"
+      >
+
+      <input
+        type="date"
+        aria-label="Au"
+        title="Au"
+        value="${escapeHTML(filters.to)}"
+        onchange="setFilter('to', this.value)"
+      >
+
+      <button onclick="resetFilters()">Effacer les filtres</button>
+    </div>
+  `;
+}
+
+function setFilter(key, value) {
+  filters[key] = value;
+  render();
+}
+
+function resetFilters() {
+  filters = { q: "", depot: "", from: "", to: "" };
+  render();
+}
+
+function go(destination) {
+  page = destination;
+  resetFilters();
+}
+
+function logout() {
+  user = null;
+  showLogin();
+}
+
+function render() {
+  if (!user) return showLogin();
+
+  if (
+    ["users", "audit", "settings"].includes(page) &&
+    !admin()
+  ) {
+    page = "dashboard";
+  }
+
+  $("app").innerHTML = `
+    <div class="shell">
+      <aside>
+        <h2>StockPro</h2>
+        <nav>
+          ${Object.entries(titles)
+            .filter(([key]) =>
+              admin() || !["users", "audit", "settings"].includes(key)
+            )
+            .map(([key, title]) => `
+              <button
+                class="${page === key ? "active" : ""}"
+                onclick="go('${key}')"
+              >${title}</button>
+            `).join("")}
+        </nav>
+      </aside>
+
+      <main>
+        <header>
+          <div>
+            <h1>${titles[page]}</h1>
+            <span class="muted">
+              ${escapeHTML(db.company)} ·
+              ${escapeHTML(user.name)} ·
+              ${admin() ? "Administrateur" : "Utilisateur"}
+            </span>
+          </div>
+
+          <div class="actions">
+            <button onclick="printPage()">Imprimer / PDF</button>
+            <button onclick="logout()">Déconnexion</button>
+          </div>
+        </header>
+
+        <div class="notice">
+          Démonstration locale : aucune synchronisation entre appareils.
+          Aucun prix ni montant. Avance = quantité livrée.
+        </div>
+
+        <div id="content"></div>
+      </main>
+    </div>
+  `;
+
+  if (page === "dashboard") showDashboard();
+  else if (page === "inventory") showInventory();
+  else if (page === "settings") showSettings();
+  else if (page === "audit") showAudit();
+  else showList();
+}
+
+function inventoryRows() {
+  return db.products.flatMap(product =>
+    db.depots.map(depot => ({
+      product: product.id,
+      depot: depot.id,
+      qty: stock(product.id, depot.id),
+      unit: product.unit,
+      min: product.min
+    }))
+  ).filter(matches);
+}
+
+function units(rows) {
+  const totals = {};
+
+  rows.forEach(row => {
+    const unit = db.products.find(
+      product => product.id === row.product
+    )?.unit || "?";
+
+    totals[unit] = (totals[unit] || 0) + row.qty;
+  });
+
+  return Object.entries(totals)
+    .map(([unit, qty]) => `${number(qty)} ${escapeHTML(unit)}`)
+    .join("<br>") || "0";
+}
+
+function showDashboard() {
+  const inventory = inventoryRows();
+  const entries = db.entries.filter(matches);
+  const outputs = db.outputs.filter(matches);
+  const transfers = db.transfers.filter(matches);
+
+  const groups = {};
+  db.outputs.forEach(row => groups[invoiceKey(row)] = row);
+
+  const pending = Object.values(groups)
+    .filter(row => row.invoiceQty > delivered(row));
+
+  const alertDate = new Date();
+  alertDate.setDate(alertDate.getDate() + 30);
+  const limit = alertDate.toISOString().slice(0, 10);
+
+  const expirations = db.entries.filter(
+    row => row.expiry && row.expiry <= limit && matches(row)
+  );
+
+  const indicators = [
+    ["Total entrées", units(entries)],
+    ["Total sorties — avances livrées", units(outputs)],
+    ["Total produits", db.products.length],
+    ["Stock disponible", units(inventory)],
+    ["Dépôts", db.depots.length],
+    ["Transferts enregistrés", transfers.length]
+  ];
+
+  $("content").innerHTML = filterBar() + `
+    <p class="muted">
+      Les dates filtrent les mouvements.
+      Le stock est actuel. Les unités différentes restent séparées.
+    </p>
+
+    <div class="vertical">
+      ${indicators.map(([title, value]) => `
+        <section class="card metric">
+          ${title}
+          <strong>${value}</strong>
+        </section>
+      `).join("")}
+
+      ${panel("Stock par produit et dépôt", table(
+        ["Produit", "Dépôt", "Disponible", "Unité"],
+        inventory.map(row => [
+          escapeHTML(itemName("products", row.product)),
+          escapeHTML(itemName("depots", row.depot)),
+          number(row.qty),
+          escapeHTML(row.unit)
+        ])
+      ))}
+
+      ${panel("Liste des dépôts", table(
+        ["Dépôt", "Responsable", "Téléphone"],
+        db.depots
+          .filter(d => !filters.depot || d.id === filters.depot)
+          .map(d => [
+            escapeHTML(d.name),
+            escapeHTML(d.manager),
+            escapeHTML(d.phone)
+          ])
+      ))}
+
+      ${panel("Transferts récents", table(
+        ["Date", "Produit", "Source", "Destination", "Quantité"],
+        transfers.slice(-5).reverse().map(row => [
+          escapeHTML(row.date),
+          escapeHTML(itemName("products", row.product)),
+          escapeHTML(itemName("depots", row.source)),
+          escapeHTML(itemName("depots", row.dest)),
+          number(row.qty)
+        ])
+      ))}
+
+      ${panel("Inventaire — alertes de stock", table(
+        ["Produit", "Dépôt", "Stock", "Seuil"],
+        inventory.filter(row => row.qty <= row.min).map(row => [
+          escapeHTML(itemName("products", row.product)),
+          escapeHTML(itemName("depots", row.depot)),
+          number(row.qty),
+          number(row.min)
+        ])
+      ))}
+
+      ${panel("Balances à livrer — toutes dates et tous dépôts", table(
+        ["Facture", "Client", "Produit", "Facturé", "Livré", "Balance"],
+        pending.map(row => [
+          escapeHTML(row.invoice),
+          escapeHTML(itemName("clients", row.client)),
+          escapeHTML(itemName("products", row.product)),
+          number(row.invoiceQty),
+          number(delivered(row)),
+          number(row.invoiceQty - delivered(row))
+        ])
+      ))}
+
+      ${panel("Dates d’expiration à surveiller",
+        table(
+          ["Produit", "Lot", "Dépôt", "Expiration"],
+          expirations.map(row => [
+            escapeHTML(itemName("products", row.product)),
+            escapeHTML(row.lot),
+            escapeHTML(itemName("depots", row.depot)),
+            escapeHTML(row.expiry)
+          ])
+        ) + `
+          <p class="muted">
+            Réceptions expirées ou expirant dans les 30 jours.
+            Le solde des lots n’est pas calculé :
+            cette liste ne garantit pas qu’un lot est encore présent.
+          </p>
+        `
+      )}
+    </div>
+  `;
+}
+
+function fieldValue(type, key, row) {
+  const definition = schemas[type].find(field => field[0] === key);
+
+  if (
+    ["products", "depots", "clients", "suppliers"]
+      .includes(definition?.[2])
+  ) {
+    return itemName(definition[2], row[key]);
+  }
+
+  if (key === "role") {
+    return row.role === "admin" ? "Administrateur" : "Utilisateur";
+  }
+
+  return row[key] ?? "";
+}
+
+function canWrite(type, id) {
+  return admin() ||
+    (!id && ["entries", "outputs", "transfers"].includes(type));
+}
+
+function showList() {
+  const type = page;
+  const definitions = schemas[type].filter(f => f[0] !== "password");
+
+  $("content").innerHTML = `
+    ${canWrite(type) ? `
+      <button class="primary" onclick="editRecord('${type}')">
+        + Ajouter
+      </button>
+    ` : ""}
+
+    ${type === "outputs" ? `
+      <p class="notice">
+        L’avance est la quantité livrée cette fois.
+        Pour livrer le reliquat, ajoutez une ligne avec les mêmes
+        facture, client, produit et quantité facturée.
+        La balance affichée est le reste actuel de la facture.
+      </p>
+    ` : ""}
+
+    ${filterBar()}
+
+    ${table(
+      [
+        ...definitions.map(f => f[1]),
+        ...(type === "outputs" ? ["Livré cumulé", "Balance actuelle"] : []),
+        "Actions"
+      ],
+      db[type].filter(matches).map(row => [
+        ...definitions.map(f =>
+          escapeHTML(fieldValue(type, f[0], row))
+        ),
+        ...(type === "outputs"
+          ? [
+              number(delivered(row)),
+              number(row.invoiceQty - delivered(row))
+            ]
+          : []
+        ),
+        `<div class="actions">
+          ${["entries", "outputs", "transfers"].includes(type) ? `
+            <button onclick="printRecord('${type}', '${row.id}')">
+              PDF
+            </button>
+          ` : ""}
+
+          ${admin() ? `
+            <button onclick="editRecord('${type}', '${row.id}')">
+              Modifier
+            </button>
+            <button
+              class="danger"
+              onclick="deleteRecord('${type}', '${row.id}')"
+            >Supprimer</button>
+          ` : "—"}
+        </div>`
+      ])
+    )}
+  `;
+}
+
+function showInventory() {
+  $("content").innerHTML = `
+    ${admin() ? `
+      <button class="primary" onclick="editRecord('adjustments')">
+        Comptage / ajustement
+      </button>
+    ` : ""}
+
+    <p class="muted">
+      Stock = entrées − avances + transferts reçus
+      − transferts envoyés + ajustements.
+    </p>
+
+    ${filterBar()}
+
+    ${table(
+      ["Produit", "Dépôt", "Disponible", "Unité", "Seuil", "État"],
+      inventoryRows().map(row => [
+        escapeHTML(itemName("products", row.product)),
+        escapeHTML(itemName("depots", row.depot)),
+        number(row.qty),
+        escapeHTML(row.unit),
+        number(row.min),
+        row.qty === 0 ? "Rupture" :
+          row.qty <= row.min ? "Stock bas" : "Disponible"
+      ])
+    )}
+
+    <h2>Historique des comptages</h2>
+
+    ${table(
+      ["Date", "Produit", "Dépôt", "Compté", "Écart", "Motif", "Actions"],
+      db.adjustments.filter(matches).slice().reverse().map(row => [
+        escapeHTML(row.date),
+        escapeHTML(itemName("products", row.product)),
+        escapeHTML(itemName("depots", row.depot)),
+        number(row.count),
+        number(row.delta),
+        escapeHTML(row.note),
+        admin() ? `
+          <button onclick="deleteRecord('adjustments', '${row.id}')">
+            Annuler
+          </button>
+        ` : "—"
+      ])
+    )}
+  `;
+}
+
+function selectOptions(type, selected) {
+  const items = type === "roles"
+    ? [
+        { id: "user", name: "Utilisateur" },
+        { id: "admin", name: "Administrateur" }
+      ]
+    : db[type];
+
+  return (
+    (type === "roles" ? "" : '<option value="">Choisir…</option>') +
+    items.map(item => `
+      <option
+        value="${item.id}"
+        ${item.id === selected ? "selected" : ""}
+      >${escapeHTML(item.name)}</option>
+    `).join("")
+  );
+}
+
+function editRecord(type, id) {
+  if (!canWrite(type, id)) return;
+
+  const row = db[type].find(item => item.id === id) || {};
+
+  $("modal").innerHTML = `
+    <h2>
+      ${id ? "Modifier" : "Ajouter"} —
+      ${titles[type] || "Comptage"}
+    </h2>
+
+    ${type === "users" ? `
+      <p class="notice">
+        Compte local, sans sécurité serveur.
+        N’utilisez pas un mot de passe personnel.
+      </p>
+    ` : ""}
+
+    ${type === "adjustments" ? `
+      <p>
+        Le stock sera immédiatement ajusté à la quantité comptée.
+        L’écart et le motif seront conservés.
+      </p>
+    ` : ""}
+
+    <form id="recordForm">
+      <div class="fields">
+        ${schemas[type].map(
+          ([key, label, fieldType = "text", required]) => {
+            let value = row[key] ??
+              (key === "date" ? today() : key === "min" ? 0 : "");
+
+            if (key === "password") value = "";
+
+            const mustFill =
+              required && !(id && key === "password");
+
+            const isSelect = [
+              "products", "depots", "clients", "suppliers", "roles"
+            ].includes(fieldType);
+
+            return `
+              <div>
+                <label for="field_${key}">
+                  ${escapeHTML(label)}
+                  ${mustFill ? " *" : ""}
+                  ${id && key === "password" ? " — vide = inchangé" : ""}
+                </label>
+
+                ${isSelect ? `
+                  <select
+                    id="field_${key}"
+                    name="${key}"
+                    ${mustFill ? "required" : ""}
+                  >${selectOptions(fieldType, value)}</select>
+                ` : `
+                  <input
+                    id="field_${key}"
+                    name="${key}"
+                    type="${fieldType}"
+                    value="${escapeHTML(value)}"
+                    ${fieldType === "number" ? 'min="0" step="0.001"' : ""}
+                    ${key === "password"
+                      ? 'minlength="8" autocomplete="new-password"' : ""}
+                    ${mustFill ? "required" : ""}
+                  >
+                `}
+              </div>
+            `;
+          }
+        ).join("")}
+      </div>
+
+      <p id="formError" class="error"></p>
+
+      <div class="footer">
+        <button type="button" onclick="closeModal()">Annuler</button>
+        <button type="submit" class="primary">Enregistrer</button>
+      </div>
+    </form>
+  `;
+
+  $("modal").showModal();
+
+  $("recordForm").onsubmit = event =>
+    submitRecord(event, type, id);
+}
+
+function closeModal() {
+  $("modal").close();
+}
+
+function validateDatabase() {
+  if (!db.users.some(account => account.role === "admin")) {
+    throw new Error("Conservez au moins un administrateur.");
+  }
+
+  const logins = db.users.map(account => account.login);
+
+  if (new Set(logins).size !== logins.length) {
+    throw new Error("Cet identifiant existe déjà.");
+  }
+
+  for (const type of ["products", "depots", "clients", "suppliers"]) {
+    const names = db[type].map(row =>
+      (type === "products" ? row.sku : row.name).trim().toLowerCase()
+    );
+
+    if (new Set(names).size !== names.length) {
+      throw new Error("Référence ou nom déjà utilisé.");
+    }
+  }
+
+  for (const product of db.products) {
+    for (const depot of db.depots) {
+      if (stock(product.id, depot.id) < -0.00001) {
+        throw new Error(
+          `Stock insuffisant : ${product.name} / ${depot.name}`
+        );
+      }
+    }
+  }
+
+  const invoices = {};
+
+  for (const row of db.outputs) {
+    const key = invoiceKey(row);
+
+    if (!invoices[key]) {
+      invoices[key] = { quantity: row.invoiceQty, delivered: 0 };
+    }
+
+    if (
+      Math.abs(invoices[key].quantity - row.invoiceQty) > 0.00001
+    ) {
+      throw new Error(
+        "La quantité facturée doit rester identique pour " +
+        "cette facture, ce client et ce produit."
+      );
+    }
+
+    invoices[key].delivered += row.qty;
+
+    if (
+      invoices[key].delivered > invoices[key].quantity + 0.00001
+    ) {
+      throw new Error("La livraison dépasse la balance à livrer.");
+    }
+  }
+}
+
+function auditCopy(value) {
+  return JSON.parse(JSON.stringify(
+    value,
+    (key, item) =>
+      ["hash", "salt"].includes(key) ? undefined : item
+  ));
+}
+
+async function submitRecord(event, type, id) {
+  event.preventDefault();
+  if (!canWrite(type, id)) return;
+
+  const backup = JSON.stringify(db);
+  const button = event.target.querySelector('[type="submit"]');
+  button.disabled = true;
+
+  try {
+    let row = Object.fromEntries(new FormData(event.target));
+
+    Object.keys(row).forEach(key => {
+      if (key !== "password") row[key] = row[key].trim();
+    });
+
+    for (const [key, , fieldType, required] of schemas[type]) {
+      if (required && key !== "password" && row[key] === "") {
+        throw new Error("Remplissez tous les champs obligatoires.");
+      }
+
+      if (fieldType === "number") {
+        row[key] = Number(row[key]);
+
+        if (!Number.isFinite(row[key]) || row[key] < 0) {
+          throw new Error("Quantité invalide.");
+        }
+      }
+    }
+
+    if (
+      ["entries", "outputs", "transfers"].includes(type) &&
+      row.qty <= 0
+    ) {
+      throw new Error("La quantité doit être supérieure à zéro.");
+    }
+
+    if (type === "transfers" && row.source === row.dest) {
+      throw new Error("Choisissez deux dépôts différents.");
+    }
+
+    if (
+      type === "entries" &&
+      row.expiry &&
+      row.expiry < row.date
+    ) {
+      throw new Error("Expiration antérieure à la réception.");
+    }
+
+    const previous = db[type].find(item => item.id === id);
+
+    if (type === "users") {
+      row.login = row.login.toLowerCase();
+
+      if (id === user.id && row.role !== "admin") {
+        throw new Error(
+          "Vous ne pouvez pas retirer votre propre rôle administrateur."
+        );
+      }
+
+      if (row.password) {
+        if (row.password.length < 8) {
+          throw new Error("Mot de passe trop court.");
+        }
+
+        row.salt = uid();
+        row.hash = await passwordHash(row.password, row.salt);
+      } else if (!id) {
+        throw new Error("Mot de passe obligatoire.");
+      }
+
+      delete row.password;
+    }
+
+    if (type === "adjustments") {
+      row.delta = row.count - stock(row.product, row.depot);
+    }
+
+    row = {
+      ...previous,
+      ...row,
+      id: id || uid(),
+      updatedAt: new Date().toISOString(),
+      by: user.name
+    };
+
+    if (id) {
+      db[type][db[type].findIndex(item => item.id === id)] = row;
+    } else {
+      db[type].push(row);
+    }
+
+    validateDatabase();
+
+    db.audit.push({
+      id: uid(),
+      date: new Date().toISOString(),
+      user: user.name,
+      action: id ? "Modification" : "Création",
+      type,
+      record: row.id,
+      before: previous ? auditCopy(previous) : null,
+      after: auditCopy(row)
+    });
+
+    save();
+
+    if (type === "users" && id === user.id) user = row;
+
+    closeModal();
+    render();
+  } catch (error) {
+    db = JSON.parse(backup);
+    $("formError").textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function deleteRecord(type, id) {
+  if (!admin()) return;
+
+  if (type === "users" && id === user.id) {
+    alert("Vous ne pouvez pas supprimer votre propre compte.");
+    return;
+  }
+
+  if (["products", "depots", "clients", "suppliers"].includes(type)) {
+    const key = {
+      products: "product",
+      depots: "depot",
+      clients: "client",
+      suppliers: "supplier"
+    }[type];
+
+    const used = [
+      "entries", "outputs", "transfers", "adjustments"
+    ].some(module =>
+      db[module].some(row =>
+        row[key] === id ||
+        (type === "depots" && [row.source, row.dest].includes(id))
+      )
+    );
+
+    if (used) {
+      alert("Cet élément est utilisé par un mouvement.");
+      return;
+    }
+  }
+
+  const reason = prompt("Motif obligatoire de suppression / annulation :");
+  if (!reason?.trim()) return;
+
+  if (!confirm(
+    "Confirmer ? Le stock sera recalculé et une trace sera conservée."
+  )) return;
+
+  const backup = JSON.stringify(db);
+
+  try {
+    const previous = db[type].find(row => row.id === id);
+    db[type] = db[type].filter(row => row.id !== id);
+
+    validateDatabase();
+
+    db.audit.push({
+      id: uid(),
+      date: new Date().toISOString(),
+      user: user.name,
+      action: "Annulation / suppression",
+      type,
+      record: id,
+      reason,
+      before: auditCopy(previous)
+    });
+
+    save();
+    render();
+  } catch (error) {
+    db = JSON.parse(backup);
+    alert(error.message);
+  }
+}
+
+function showAudit() {
+  $("content").innerHTML = `
+    <p class="muted">
+      Historique local non inviolable :
+      le propriétaire du navigateur peut modifier son stockage.
+    </p>
+    ${table(
+      ["Date", "Utilisateur", "Action", "Module", "Motif", "Détail"],
+      db.audit.slice().reverse().map(row => [
+        escapeHTML(new Date(row.date).toLocaleString("fr-FR")),
+        escapeHTML(row.user),
+        escapeHTML(row.action),
+        escapeHTML(titles[row.type] || row.type),
+        escapeHTML(row.reason),
+        `<button onclick="auditDetail('${row.id}')">Voir</button>`
+      ])
+    )}
+  `;
+}
+
+function auditDetail(id) {
+  const record = db.audit.find(row => row.id === id);
+
+  $("modal").innerHTML = `
+    <h2>Détail de l’opération</h2>
+    <pre style="white-space:pre-wrap;overflow-wrap:anywhere">${
+      escapeHTML(JSON.stringify(record, null, 2))
+    }</pre>
+    <button onclick="closeModal()">Fermer</button>
+  `;
+
+  $("modal").showModal();
+}
+
+function printHTML(title, content) {
+  $("print").innerHTML = `
+    <h1>${escapeHTML(db.company)}</h1>
+    <h2>${escapeHTML(title)}</h2>
+    <p>Édité le ${escapeHTML(new Date().toLocaleString("fr-FR"))}</p>
+    ${content}
+    <p style="margin-top:35px">
+      Signature / cachet : __________________________
+    </p>
+  `;
+
+  window.print();
+}
+
+function printRecord(type, id) {
+  const row = db[type].find(item => item.id === id);
+
+  const fields = schemas[type].map(field => [
+    escapeHTML(field[1]),
+    escapeHTML(fieldValue(type, field[0], row))
+  ]);
+
+  if (type === "outputs") {
+    fields.push(
+      ["Total livré à ce jour", number(delivered(row))],
+      ["Balance actuelle", number(row.invoiceQty - delivered(row))]
+    );
+  }
+
+  const documentTitles = {
+    entries: "Bon de réception",
+    outputs: "Bon de livraison",
+    transfers: "Bon de transfert"
+  };
+
+  printHTML(
+    documentTitles[type],
+    table(["Champ", "Valeur"], fields) +
+    "<p>Quantités uniquement — aucun montant financier.</p>"
+  );
+}
+
+function printPage() {
+  const copy = $("content").cloneNode(true);
+
+  copy.querySelectorAll("button,input,select,.toolbar")
+    .forEach(element => element.remove());
+
+  copy.querySelectorAll("table").forEach(item => {
+    const lastHeader = item.querySelector("thead tr")?.lastElementChild;
+
+    if (["Actions", "Détail"].includes(lastHeader?.textContent)) {
+      item.querySelectorAll("tr").forEach(row =>
+        row.lastElementChild?.remove()
+      );
+    }
+  });
+
+  printHTML(titles[page], copy.innerHTML);
+}
+
+function showSettings() {
+  $("content").innerHTML = `
+    <div class="vertical">
+      ${panel("Entreprise", `
+        <label>Nom de l’entreprise</label>
+        <input id="companyName" value="${escapeHTML(db.company)}">
+        <button
+          class="primary"
+          style="margin-top:10px"
+          onclick="changeCompany()"
+        >Enregistrer</button>
+      `)}
+
+      ${panel("Sauvegarde", `
+        <p>
+          Exportez régulièrement vos données.
+          La sauvegarde contient les données et les empreintes
+          des mots de passe : conservez-la dans un lieu privé.
+        </p>
+
+        <button class="primary" onclick="exportBackup()">
+          Exporter une sauvegarde JSON
+        </button>
+
+        <h2>Restauration</h2>
+        <p>
+          Remplace les données actuelles et vous déconnecte.
+          Exportez d’abord une sauvegarde si nécessaire.
+        </p>
+
+        <input
+          id="backupFile"
+          type="file"
+          accept=".json,application/json"
+        >
+
+        <button style="margin-top:10px" onclick="restoreBackup()">
+          Restaurer une sauvegarde
+        </button>
+      `)}
+
+      ${panel("Démarrage et limites", `
+        <ol>
+          <li>Créez vos dépôts, produits, fournisseurs et clients.</li>
+          <li>Enregistrez les entrées pour alimenter le stock.</li>
+          <li>
+            Enregistrez les livraisons dans Sorties :
+            l’avance est la quantité livrée cette fois.
+          </li>
+          <li>Créez les comptes dans Comptes utilisateurs.</li>
+          <li>
+            Pour un PDF, choisissez « Enregistrer au format PDF »
+            dans la fenêtre d’impression.
+          </li>
+        </ol>
+
+        <p>
+          Une ligne correspond à un produit.
+          Les documents multiproduits se saisissent en plusieurs lignes.
+          Les sorties ne sont pas ventilées par lot.
+          Les alertes d’expiration sont indicatives.
+        </p>
+
+        <p>
+          Les contrôles de stock portent sur le solde actuel,
+          pas sur chaque solde historique.
+          Les comptages administrateur ajustent immédiatement le stock.
+        </p>
+
+        <p>
+          Les utilisateurs consultent et ajoutent les mouvements.
+          Seul l’administrateur gère les listes, les comptes,
+          les modifications, les annulations et les ajustements.
+          Ces restrictions restent locales, sans sécurité serveur.
+        </p>
+
+        <p>
+          Héberger cette page ne partage pas les comptes et les données.
+          Une base de données et une authentification serveur sont
+          nécessaires pour une utilisation simultanée sécurisée.
+        </p>
+
+        <p>
+          Les données saisies dans un ancien fichier ne migrent pas
+          automatiquement vers le site : exportez une sauvegarde
+          puis restaurez-la depuis le site.
+        </p>
+      `)}
+    </div>
+  `;
+}
+
+function changeCompany() {
+  if (!admin()) return;
+
+  const value = $("companyName").value.trim();
+  if (!value) return;
+
+  const previous = db.company;
+
+  try {
+    db.company = value;
+    save();
+    render();
+  } catch (error) {
+    db.company = previous;
+    alert("Enregistrement impossible.");
+  }
+}
+
+function exportBackup() {
+  if (!admin()) return;
+
+  const blob = new Blob(
+    [JSON.stringify(db, null, 2)],
+    { type: "application/json" }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "stockpro-sauvegarde-" + today() + ".json";
+  link.click();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function restoreBackup() {
+  if (!admin()) return;
+
+  const file = $("backupFile").files[0];
+
+  if (!file) {
+    alert("Choisissez une sauvegarde JSON.");
+    return;
+  }
+
+  if (!confirm(
+    "Remplacer toutes les données actuelles ? " +
+    "Exportez-les d’abord si nécessaire."
+  )) return;
+
+  const previous = db;
+
+  try {
+    const data = JSON.parse(await file.text());
+
+    const modules = [
+      "users", "products", "depots", "clients", "suppliers",
+      "entries", "outputs", "transfers", "adjustments", "audit"
+    ];
+
+    if (
+      data.version !== 1 ||
+      typeof data.company !== "string" ||
+      !modules.every(key => Array.isArray(data[key]))
+    ) {
+      throw new Error("Format de sauvegarde invalide.");
+    }
+
+    for (const module of modules) {
+      const ids = data[module].map(row => row.id);
+
+      if (
+        ids.some(id => typeof id !== "string" || !id) ||
+        new Set(ids).size !== ids.length
+      ) {
+        throw new Error("Identifiants invalides dans " + module);
+      }
+    }
+
+    if (
+      !data.users.length ||
+      data.users.some(account =>
+        !account.login ||
+        !account.hash ||
+        !account.salt ||
+        !["admin", "user"].includes(account.role)
+      )
+    ) {
+      throw new Error("Comptes invalides.");
+    }
+
+    for (const type of ["products", "depots", "clients", "suppliers"]) {
+      if (data[type].some(row =>
+        typeof row.name !== "string" || !row.name.trim()
+      )) {
+        throw new Error("Nom invalide dans " + type);
+      }
+    }
+
+    for (const product of data.products) {
+      if (
+        typeof product.sku !== "string" ||
+        !product.sku.trim() ||
+        typeof product.unit !== "string" ||
+        !product.unit.trim() ||
+        !Number.isFinite(product.min) ||
+        product.min < 0
+      ) {
+        throw new Error("Produit invalide.");
+      }
+    }
+
+    for (const type of [
+      "entries", "outputs", "transfers", "adjustments"
+    ]) {
+      for (const row of data[type]) {
+        if (!data.products.some(product => product.id === row.product)) {
+          throw new Error("Produit introuvable dans un mouvement.");
+        }
+
+        const depotIds = type === "transfers"
+          ? [row.source, row.dest]
+          : [row.depot];
+
+        if (
+          depotIds.some(id =>
+            !data.depots.some(depot => depot.id === id)
+          )
+        ) {
+          throw new Error("Dépôt introuvable dans un mouvement.");
+        }
+
+        if (type === "adjustments") {
+          if (
+            !Number.isFinite(row.delta) ||
+            !Number.isFinite(row.count) ||
+            row.count < 0
+          ) {
+            throw new Error("Ajustement invalide.");
+          }
+        } else if (!Number.isFinite(row.qty) || row.qty <= 0) {
+          throw new Error("Quantité invalide.");
+        }
+
+        if (
+          type === "transfers" &&
+          row.source === row.dest
+        ) {
+          throw new Error("Transfert invalide.");
+        }
+
+        if (
+          type === "entries" &&
+          !data.suppliers.some(supplier => supplier.id === row.supplier)
+        ) {
+          throw new Error("Fournisseur introuvable.");
+        }
+
+        if (type === "outputs") {
+          if (
+            typeof row.invoice !== "string" ||
+            !row.invoice.trim() ||
+            !Number.isFinite(row.invoiceQty) ||
+            row.invoiceQty <= 0 ||
+            !data.clients.some(client => client.id === row.client)
+          ) {
+            throw new Error("Livraison invalide.");
+          }
+        }
+      }
+    }
+
+    db = data;
+    validateDatabase();
+    save();
+
+    user = null;
+    showLogin();
+  } catch (error) {
+    db = previous;
+    alert("Restauration refusée : " + error.message);
+  }
+}
+
+showLogin();
+</script>
+</body>
+</html>
