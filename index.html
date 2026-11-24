@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>StockPro — Gestion de stock</title>
+<title>StockPro — Supabase</title>
 
 <style>
 :root {
@@ -15,7 +15,9 @@
   --text: #20394c;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -24,7 +26,11 @@ body {
   font: 14px system-ui, Arial, sans-serif;
 }
 
-button, input, select { font: inherit; }
+button,
+input,
+select {
+  font: inherit;
+}
 
 button {
   padding: 10px 13px;
@@ -40,7 +46,8 @@ button:disabled {
   cursor: default;
 }
 
-input, select {
+input,
+select {
   width: 100%;
   padding: 10px;
   border: 1px solid #b9cbd8;
@@ -61,7 +68,9 @@ label {
   border-color: var(--green);
 }
 
-.danger { color: #af2539; }
+.danger {
+  color: #af2539;
+}
 
 .shell {
   display: grid;
@@ -75,7 +84,9 @@ aside {
   padding: 22px 12px;
 }
 
-aside h2 { padding-left: 10px; }
+aside h2 {
+  padding-left: 10px;
+}
 
 aside button {
   display: block;
@@ -87,14 +98,17 @@ aside button {
   margin: 4px 0;
 }
 
-aside button.active { background: #29566f; }
+aside button.active {
+  background: #29566f;
+}
 
 main {
   padding: 22px;
   min-width: 0;
 }
 
-header, .actions {
+header,
+.actions {
   display: flex;
   gap: 9px;
   flex-wrap: wrap;
@@ -111,8 +125,13 @@ h1 {
   margin: 0 0 6px;
 }
 
-h2 { font-size: 19px; }
-p { line-height: 1.6; }
+h2 {
+  font-size: 19px;
+}
+
+p {
+  line-height: 1.6;
+}
 
 .muted {
   color: #64798a;
@@ -142,7 +161,9 @@ p { line-height: 1.6; }
   min-width: 0;
 }
 
-.metric { border-left: 5px solid var(--green); }
+.metric {
+  border-left: 5px solid var(--green);
+}
 
 .metric strong {
   display: block;
@@ -151,7 +172,9 @@ p { line-height: 1.6; }
   margin-top: 10px;
 }
 
-.scroll { overflow: auto; }
+.scroll {
+  overflow: auto;
+}
 
 table {
   width: 100%;
@@ -160,7 +183,8 @@ table {
   font-size: 13px;
 }
 
-th, td {
+th,
+td {
   padding: 11px;
   border: 1px solid var(--border);
   text-align: left;
@@ -171,7 +195,9 @@ th {
   color: white;
 }
 
-tr:nth-child(even) { background: #edf3f9; }
+tr:nth-child(even) {
+  background: #edf3f9;
+}
 
 .toolbar {
   display: flex;
@@ -193,7 +219,9 @@ tr:nth-child(even) { background: #edf3f9; }
   border-radius: 12px;
 }
 
-.auth input { margin: 5px 0 16px; }
+.auth input {
+  margin: 5px 0 16px;
+}
 
 dialog {
   width: min(850px, 96vw);
@@ -204,7 +232,9 @@ dialog {
   border-radius: 12px;
 }
 
-dialog::backdrop { background: #102c4099; }
+dialog::backdrop {
+  background: #102c4099;
+}
 
 .fields {
   display: grid;
@@ -219,24 +249,51 @@ dialog::backdrop { background: #102c4099; }
   margin-top: 20px;
 }
 
-.error { color: #af2037; }
-#print { display: none; }
+.error {
+  color: #af2037;
+}
+
+.success {
+  color: var(--green);
+}
+
+#status {
+  padding: 0 22px 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+#print {
+  display: none;
+}
 
 @media (max-width: 760px) {
-  .shell { display: block; }
-  aside { padding: 12px; }
-  aside h2 { display: none; }
+  .shell {
+    display: block;
+  }
+
+  aside {
+    padding: 12px;
+  }
+
+  aside h2 {
+    display: none;
+  }
 
   aside nav {
     display: flex;
     flex-direction: column;
   }
 
-  main { padding: 14px; }
+  main {
+    padding: 14px;
+  }
 }
 
 @media print {
-  body > * { display: none !important; }
+  body > * {
+    display: none !important;
+  }
 
   #print {
     display: block !important;
@@ -244,7 +301,9 @@ dialog::backdrop { background: #102c4099; }
     color: black;
   }
 
-  #print .scroll { overflow: visible !important; }
+  #print .scroll {
+    overflow: visible !important;
+  }
 
   #print table {
     width: 100%;
@@ -253,7 +312,8 @@ dialog::backdrop { background: #102c4099; }
     font-size: 8px;
   }
 
-  #print td, #print th {
+  #print td,
+  #print th {
     padding: 5px 3px;
     white-space: normal;
     overflow-wrap: anywhere;
@@ -265,14 +325,18 @@ dialog::backdrop { background: #102c4099; }
     background: #eee;
   }
 
-  #print thead { display: table-header-group; }
+  #print thead {
+    display: table-header-group;
+  }
 
   #print tr {
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  #print .vertical { display: block; }
+  #print .vertical {
+    display: block;
+  }
 
   #print .card {
     border: 0;
@@ -281,10 +345,17 @@ dialog::backdrop { background: #102c4099; }
     margin: 8px 0;
   }
 
-  #print .metric { border-left: 3px solid #999; }
-  #print .metric strong { font-size: 18px; }
-  #print h1 { font-size: 20px; }
-  #print h2 { font-size: 16px; }
+  #print .metric strong {
+    font-size: 18px;
+  }
+
+  #print h1 {
+    font-size: 20px;
+  }
+
+  #print h2 {
+    font-size: 16px;
+  }
 
   @page {
     size: A4 landscape;
@@ -296,11 +367,29 @@ dialog::backdrop { background: #102c4099; }
 
 <body>
 <div id="app"></div>
+<p id="status" role="status"></p>
 <dialog id="modal"></dialog>
 <div id="print"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
 "use strict";
+
+/* =====================================================
+   CONFIGURATION SUPABASE
+   Clé publique uniquement : aucune clé secrète ici.
+   ===================================================== */
+
+const SUPABASE_URL =
+  "https://qcrcuncmgfxojdhcdtno.supabase.co";
+
+const SUPABASE_PUBLIC_KEY =
+  "sb_publishable_5Gugsp17R5waoCb_osr1Kg_v8daehTW";
+
+/* =====================================================
+   OUTILS
+   ===================================================== */
 
 const $ = id => document.getElementById(id);
 
@@ -315,12 +404,14 @@ const escapeHTML = value => String(value ?? "").replace(
   }[character])
 );
 
-const KEY = "stockpro_local_v1";
-const uid = () =>
-  Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
+const number = value =>
+  Number(value).toLocaleString("fr-FR", {
+    maximumFractionDigits: 3
+  });
 
 const today = () => {
   const date = new Date();
+
   return [
     date.getFullYear(),
     String(date.getMonth() + 1).padStart(2, "0"),
@@ -328,21 +419,23 @@ const today = () => {
   ].join("-");
 };
 
-const number = value =>
-  Number(value).toLocaleString("fr-FR", {
-    maximumFractionDigits: 3
-  });
-
-let db = null;
+let client = null;
 let user = null;
+let profile = null;
 let page = "dashboard";
-let filters = { q: "", depot: "", from: "", to: "" };
+let db = {};
+let loadedAt = null;
+let sessionEpoch = 0;
+let refreshBusy = false;
 
-try {
-  db = JSON.parse(localStorage.getItem(KEY) || "null");
-} catch (error) {}
+let filters = {
+  q: "",
+  depot: "",
+  from: "",
+  to: ""
+};
 
-const admin = () => user?.role === "admin";
+const admin = () => profile?.role === "admin";
 
 const titles = {
   dashboard: "Tableau de bord",
@@ -354,10 +447,16 @@ const titles = {
   depots: "Dépôts",
   clients: "Clients",
   suppliers: "Fournisseurs",
-  users: "Comptes utilisateurs",
   audit: "Historique",
-  settings: "Paramètres et sauvegarde"
+  settings: "Comptes et paramètres"
 };
+
+const referenceTypes = [
+  "products",
+  "depots",
+  "clients",
+  "suppliers"
+];
 
 const schemas = {
   products: [
@@ -366,149 +465,120 @@ const schemas = {
     ["unit", "Unité : sac, carton, pièce…", "text", true],
     ["min", "Seuil de stock bas", "number", true]
   ],
+
   depots: [
     ["name", "Nom du dépôt", "text", true],
     ["address", "Adresse"],
     ["manager", "Responsable"],
     ["phone", "Téléphone", "tel"]
   ],
+
   clients: [
-    ["name", "Nom du client", "text", true],
+    ["name", "Client", "text", true],
     ["phone", "Téléphone", "tel"],
     ["address", "Adresse"]
   ],
+
   suppliers: [
     ["name", "Fournisseur", "text", true],
     ["phone", "Téléphone", "tel"],
     ["address", "Adresse"]
   ],
+
   entries: [
     ["date", "Date", "date", true],
     ["ref", "N° bon ou facture", "text", true],
-    ["product", "Produit", "products", true],
+    ["product_id", "Produit", "products", true],
     ["packing", "Packing-list"],
     ["qty", "Quantité reçue", "number", true],
-    ["supplier", "Fournisseur", "suppliers", true],
-    ["depot", "Dépôt", "depots", true],
+    ["supplier_id", "Fournisseur", "suppliers", true],
+    ["depot_id", "Dépôt", "depots", true],
     ["lot", "Lot"],
     ["expiry", "Date d’expiration", "date"],
     ["driver", "Chauffeur ou trucking"],
     ["note", "Remarque"]
   ],
+
   outputs: [
     ["date", "Date de livraison", "date", true],
     ["invoice", "Facture", "text", true],
-    ["product", "Produit", "products", true],
-    ["invoiceQty", "Qté sur la facture", "number", true],
-    ["client", "Client", "clients", true],
+    ["invoice_qty", "Qté sur la facture", "number", true],
+    ["product_id", "Produit", "products", true],
+    ["client_id", "Client", "clients", true],
     ["qty", "Avance : quantité livrée cette fois", "number", true],
     ["driver", "Chauffeur"],
     ["plate", "Plaque"],
     ["ref", "N° bon de livraison", "text", true],
-    ["depot", "Dépôt", "depots", true],
+    ["depot_id", "Dépôt", "depots", true],
     ["phone", "Téléphone du chauffeur", "tel"],
     ["note", "Remarque"]
   ],
+
   transfers: [
     ["date", "Date", "date", true],
     ["ref", "N° transfert", "text", true],
-    ["product", "Produit", "products", true],
-    ["source", "Dépôt source", "depots", true],
-    ["dest", "Dépôt destination", "depots", true],
+    ["product_id", "Produit", "products", true],
+    ["source_id", "Dépôt source", "depots", true],
+    ["dest_id", "Dépôt destination", "depots", true],
     ["qty", "Quantité", "number", true],
     ["driver", "Chauffeur ou trucking"],
     ["plate", "Plaque"],
     ["note", "Remarque"]
   ],
+
   adjustments: [
     ["date", "Date", "date", true],
-    ["product", "Produit", "products", true],
-    ["depot", "Dépôt", "depots", true],
-    ["count", "Quantité physiquement comptée", "number", true],
+    ["product_id", "Produit", "products", true],
+    ["depot_id", "Dépôt", "depots", true],
+    ["counted_qty", "Quantité physiquement comptée", "number", true],
     ["note", "Motif obligatoire", "text", true]
-  ],
-  users: [
-    ["name", "Nom complet", "text", true],
-    ["login", "Identifiant", "text", true],
-    ["role", "Rôle", "roles", true],
-    ["password", "Mot de passe : 8 caractères minimum", "password", true]
   ]
 };
 
-function save() {
-  localStorage.setItem(KEY, JSON.stringify(db));
+function showStatus(message, error = false) {
+  $("status").textContent = message;
+  $("status").className = error ? "error" : "success";
 }
 
-async function passwordHash(password, salt) {
-  if (!globalThis.crypto?.subtle) {
-    throw new Error(
-      "Utilisez un navigateur récent, de préférence avec une adresse HTTPS."
-    );
-  }
-
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(password),
-    "PBKDF2",
-    false,
-    ["deriveBits"]
-  );
-
-  const bits = await crypto.subtle.deriveBits(
-    {
-      name: "PBKDF2",
-      salt: new TextEncoder().encode(salt),
-      iterations: 120000,
-      hash: "SHA-256"
-    },
-    key,
-    256
-  );
-
-  return Array.from(new Uint8Array(bits))
-    .map(value => value.toString(16).padStart(2, "0"))
-    .join("");
-}
+/* =====================================================
+   CONNEXION SUPABASE
+   ===================================================== */
 
 function showLogin() {
-  const setup = !db?.users?.length;
+  page = "dashboard";
 
   $("app").innerHTML = `
     <section class="auth">
       <h1>StockPro</h1>
-      <p>Gestion de stock · Exports PDF complets</p>
+      <p>Connexion Supabase · Données partagées</p>
 
       <div class="notice">
-        Démonstration locale : les comptes et les données restent
-        dans ce navigateur, même après publication sur Internet.
-        Pas de synchronisation ni de sécurité serveur.
-        Utilisez des données fictives et un mot de passe réservé à cette démo.
+        Utilisez l’adresse e-mail et le mot de passe créés
+        dans Supabase Auth, pas l’ancien compte local.
+        Les anciennes données locales ne sont pas encore importées.
       </div>
 
-      <h2>${setup ? "Créer le premier administrateur" : "Connexion"}</h2>
-
       <form id="loginForm">
-        ${setup ? `
-          <label>Entreprise</label>
-          <input name="company" required>
-          <label>Votre nom</label>
-          <input name="name" required>
-        ` : ""}
-
-        <label>Identifiant</label>
-        <input name="login" autocomplete="username" required>
-
-        <label>Mot de passe</label>
+        <label for="loginEmail">Adresse e-mail</label>
         <input
+          id="loginEmail"
+          name="email"
+          type="email"
+          autocomplete="username"
+          required
+        >
+
+        <label for="loginPassword">Mot de passe</label>
+        <input
+          id="loginPassword"
           name="password"
           type="password"
-          minlength="8"
-          autocomplete="${setup ? "new-password" : "current-password"}"
+          autocomplete="current-password"
           required
         >
 
         <button class="primary" type="submit">
-          ${setup ? "Créer et démarrer" : "Se connecter"}
+          Se connecter
         </button>
 
         <p id="loginError" class="error"></p>
@@ -521,108 +591,272 @@ function showLogin() {
 
     const button = event.target.querySelector("button");
     button.disabled = true;
+    $("loginError").textContent = "";
 
     try {
       const values = Object.fromEntries(new FormData(event.target));
 
-      if (setup) {
-        const salt = uid();
-        const account = {
-          id: uid(),
-          name: values.name.trim(),
-          login: values.login.trim().toLowerCase(),
-          role: "admin",
-          salt,
-          hash: await passwordHash(values.password, salt)
-        };
+      const { error } = await client.auth.signInWithPassword({
+        email: values.email.trim(),
+        password: values.password
+      });
 
-        db = {
-          version: 1,
-          company: values.company.trim(),
-          users: [account],
-          products: [],
-          depots: [],
-          clients: [],
-          suppliers: [],
-          entries: [],
-          outputs: [],
-          transfers: [],
-          adjustments: [],
-          audit: []
-        };
+      if (error) throw error;
 
-        save();
-        user = account;
-      } else {
-        const account = db.users.find(
-          item => item.login === values.login.trim().toLowerCase()
-        );
-
-        if (
-          !account ||
-          await passwordHash(values.password, account.salt) !== account.hash
-        ) {
-          throw new Error("Identifiant ou mot de passe incorrect.");
-        }
-
-        user = account;
-      }
-
-      render();
+      await openSession();
     } catch (error) {
-      $("loginError").textContent = error.message;
+      if ($("loginError")) {
+        $("loginError").textContent = error.message;
+      } else {
+        showStatus(error.message, true);
+      }
     } finally {
       button.disabled = false;
     }
   };
 }
 
-function itemName(type, id) {
-  return db[type].find(item => item.id === id)?.name || "—";
+async function readAll(tableName) {
+  const rows = [];
+  const pageSize = 500;
+
+  for (let start = 0; ; start += pageSize) {
+    const { data, error } = await client
+      .from(tableName)
+      .select("*")
+      .order("id")
+      .range(start, start + pageSize - 1);
+
+    if (error) {
+      throw new Error(tableName + " : " + error.message);
+    }
+
+    rows.push(...data);
+
+    if (data.length < pageSize) break;
+  }
+
+  return rows;
 }
 
-function stock(product, depot) {
-  const sum = (type, condition) =>
-    db[type]
+async function fetchData() {
+  const result = {};
+
+  const tables = [
+    ...referenceTypes,
+    "entries",
+    "invoice_lines",
+    "outputs",
+    "transfers",
+    "adjustments"
+  ];
+
+  if (admin()) tables.push("audit_log");
+
+  for (const tableName of tables) {
+    result[tableName] = await readAll(tableName);
+  }
+
+  result.audit_log = result.audit_log || [];
+
+  return result;
+}
+
+async function openSession() {
+  const epoch = ++sessionEpoch;
+
+  const {
+    data: { session },
+    error
+  } = await client.auth.getSession();
+
+  if (error) throw error;
+
+  if (!session) {
+    user = null;
+    profile = null;
+    db = {};
+    showLogin();
+    return;
+  }
+
+  const { data: account, error: profileError } = await client
+    .from("profiles")
+    .select("id, name, role")
+    .eq("id", session.user.id)
+    .maybeSingle();
+
+  if (profileError) throw profileError;
+
+  if (!account) {
+    throw new Error(
+      "Compte connecté sans profil autorisé. " +
+      "Vérifiez son UUID dans la table profiles."
+    );
+  }
+
+  if (epoch !== sessionEpoch) return;
+
+  user = session.user;
+  profile = account;
+
+  const nextData = await fetchData();
+
+  if (epoch !== sessionEpoch) return;
+
+  db = nextData;
+  loadedAt = new Date();
+
+  render();
+  showStatus("Connexion réussie. Données chargées depuis Supabase.");
+}
+
+async function refresh() {
+  if (refreshBusy || !profile) return;
+
+  refreshBusy = true;
+  showStatus("Actualisation…");
+
+  const epoch = sessionEpoch;
+
+  try {
+    const nextData = await fetchData();
+
+    if (epoch !== sessionEpoch) return;
+
+    db = nextData;
+    loadedAt = new Date();
+
+    render();
+    showStatus("Données actualisées.");
+  } catch (error) {
+    showStatus("Actualisation impossible : " + error.message, true);
+  } finally {
+    refreshBusy = false;
+  }
+}
+
+async function logout() {
+  try {
+    const { error } = await client.auth.signOut();
+
+    if (error) throw error;
+
+    sessionEpoch++;
+    user = null;
+    profile = null;
+    db = {};
+
+    $("modal").close();
+
+    showLogin();
+    showStatus("Déconnecté.");
+  } catch (error) {
+    showStatus(error.message, true);
+  }
+}
+
+/* =====================================================
+   CALCULS D’AFFICHAGE
+   Les écritures sont validées côté Supabase.
+   ===================================================== */
+
+function itemName(type, id) {
+  return db[type]?.find(item => item.id === id)?.name || "—";
+}
+
+function enrichedOutputs() {
+  return db.outputs.map(output => {
+    const line = db.invoice_lines.find(
+      invoice => invoice.id === output.invoice_line_id
+    );
+
+    return {
+      ...output,
+      invoice: line?.invoice || "—",
+      invoice_qty: Number(line?.invoice_qty || 0),
+      product_id: line?.product_id,
+      client_id: line?.client_id
+    };
+  });
+}
+
+function delivered(invoiceLineId) {
+  return db.outputs
+    .filter(output => output.invoice_line_id === invoiceLineId)
+    .reduce((total, output) => total + Number(output.qty), 0);
+}
+
+function stock(productId, depotId) {
+  const sum = (tableName, condition, field = "qty") =>
+    db[tableName]
       .filter(condition)
-      .reduce(
-        (total, row) =>
-          total + (type === "adjustments" ? row.delta : row.qty),
-        0
-      );
+      .reduce((total, row) => total + Number(row[field]), 0);
+
+  const outputs = enrichedOutputs()
+    .filter(row =>
+      row.product_id === productId &&
+      row.depot_id === depotId
+    )
+    .reduce((total, row) => total + Number(row.qty), 0);
 
   return (
     sum("entries", row =>
-      row.product === product && row.depot === depot
+      row.product_id === productId &&
+      row.depot_id === depotId
     )
-    - sum("outputs", row =>
-      row.product === product && row.depot === depot
-    )
+    - outputs
     + sum("transfers", row =>
-      row.product === product && row.dest === depot
+      row.product_id === productId &&
+      row.dest_id === depotId
     )
     - sum("transfers", row =>
-      row.product === product && row.source === depot
+      row.product_id === productId &&
+      row.source_id === depotId
     )
-    + sum("adjustments", row =>
-      row.product === product && row.depot === depot
+    + sum(
+      "adjustments",
+      row =>
+        row.product_id === productId &&
+        row.depot_id === depotId,
+      "delta"
     )
   );
 }
 
-function invoiceKey(row) {
-  return [
-    row.invoice.trim().toLowerCase(),
-    row.client,
-    row.product
-  ].join("|");
+function units(rows) {
+  const totals = {};
+
+  rows.forEach(row => {
+    const unit = db.products.find(
+      product => product.id === row.product_id
+    )?.unit || "?";
+
+    totals[unit] = (totals[unit] || 0) + Number(row.qty);
+  });
+
+  return Object.entries(totals)
+    .map(([unit, quantity]) =>
+      number(quantity) + " " + escapeHTML(unit)
+    )
+    .join("<br>") || "0";
 }
 
-function delivered(row) {
-  return db.outputs
-    .filter(item => invoiceKey(item) === invoiceKey(row))
-    .reduce((total, item) => total + item.qty, 0);
+function inventoryRows() {
+  return db.products.flatMap(product =>
+    db.depots.map(depot => ({
+      product_id: product.id,
+      depot_id: depot.id,
+      qty: stock(product.id, depot.id),
+      unit: product.unit,
+      min: Number(product.min)
+    }))
+  ).filter(matches);
 }
+
+/* =====================================================
+   TABLEAUX ET FILTRES
+   ===================================================== */
 
 function table(headers, rows) {
   return `
@@ -631,15 +865,16 @@ function table(headers, rows) {
         <thead>
           <tr>
             ${headers.map(header =>
-              `<th>${escapeHTML(header)}</th>`
+              "<th>" + escapeHTML(header) + "</th>"
             ).join("")}
           </tr>
         </thead>
+
         <tbody>
           ${rows.length
             ? rows.map(row => `
                 <tr>
-                  ${row.map(cell => `<td>${cell}</td>`).join("")}
+                  ${row.map(cell => "<td>" + cell + "</td>").join("")}
                 </tr>
               `).join("")
             : `
@@ -666,15 +901,18 @@ function panel(title, content) {
 function matches(row) {
   const text = [
     JSON.stringify(row),
-    row.product ? itemName("products", row.product) : "",
-    row.client ? itemName("clients", row.client) : ""
+    itemName("products", row.product_id),
+    itemName("clients", row.client_id),
+    itemName("suppliers", row.supplier_id),
+    itemName("depots", row.depot_id)
   ].join(" ").toLowerCase();
 
   return (
     (!filters.q || text.includes(filters.q.toLowerCase())) &&
     (
       !filters.depot ||
-      [row.depot, row.source, row.dest].includes(filters.depot)
+      [row.depot_id, row.source_id, row.dest_id]
+        .includes(filters.depot)
     ) &&
     (!row.date || !filters.from || row.date >= filters.from) &&
     (!row.date || !filters.to || row.date <= filters.to)
@@ -700,7 +938,7 @@ function filterBar() {
         ${db.depots.map(depot => `
           <option
             value="${depot.id}"
-            ${filters.depot === depot.id ? "selected" : ""}
+            ${depot.id === filters.depot ? "selected" : ""}
           >${escapeHTML(depot.name)}</option>
         `).join("")}
       </select>
@@ -741,16 +979,15 @@ function go(destination) {
   resetFilters();
 }
 
-function logout() {
-  user = null;
-  showLogin();
-}
+/* =====================================================
+   INTERFACE PRINCIPALE
+   ===================================================== */
 
 function render() {
-  if (!user) return showLogin();
+  if (!profile) return showLogin();
 
   if (
-    ["users", "audit", "settings"].includes(page) &&
+    ["audit", "settings"].includes(page) &&
     !admin()
   ) {
     page = "dashboard";
@@ -760,14 +997,15 @@ function render() {
     <div class="shell">
       <aside>
         <h2>StockPro</h2>
+
         <nav>
           ${Object.entries(titles)
             .filter(([key]) =>
-              admin() || !["users", "audit", "settings"].includes(key)
+              admin() || !["audit", "settings"].includes(key)
             )
             .map(([key, title]) => `
               <button
-                class="${page === key ? "active" : ""}"
+                class="${key === page ? "active" : ""}"
                 onclick="go('${key}')"
               >${title}</button>
             `).join("")}
@@ -778,14 +1016,22 @@ function render() {
         <header>
           <div>
             <h1>${titles[page]}</h1>
+
             <span class="muted">
-              ${escapeHTML(db.company)} ·
-              ${escapeHTML(user.name)} ·
-              ${admin() ? "Administrateur" : "Utilisateur"}
+              ${escapeHTML(profile.name)} ·
+              ${admin() ? "Administrateur" : "Utilisateur"} ·
+              Supabase
+
+              <br>
+
+              Dernier chargement :
+              ${escapeHTML(loadedAt?.toLocaleString("fr-FR") || "—")}
             </span>
           </div>
 
           <div class="actions">
+            <button onclick="refresh()">Actualiser</button>
+
             ${page !== "settings" ? `
               <button class="primary" onclick="printPage()">
                 Exporter le tableau en PDF
@@ -797,10 +1043,12 @@ function render() {
         </header>
 
         <div class="notice">
-          Démonstration locale, sans serveur partagé.
-          Chaque export PDF contient toute la rubrique affichée,
-          jamais une seule ligne.
-          Effacez les filtres pour inclure tous les enregistrements.
+          Version Supabase de transition :
+          les nouvelles données sont partagées.
+          Actualisez pour voir les changements d’un autre appareil.
+          Les anciennes données locales ne sont pas importées.
+          Les modifications et annulations de mouvements restent
+          désactivées, en attente de leurs fonctions sécurisées.
         </div>
 
         <div id="content"></div>
@@ -810,58 +1058,31 @@ function render() {
 
   if (page === "dashboard") showDashboard();
   else if (page === "inventory") showInventory();
-  else if (page === "settings") showSettings();
   else if (page === "audit") showAudit();
+  else if (page === "settings") showSettings();
   else showList();
 }
 
-function inventoryRows() {
-  return db.products.flatMap(product =>
-    db.depots.map(depot => ({
-      product: product.id,
-      depot: depot.id,
-      qty: stock(product.id, depot.id),
-      unit: product.unit,
-      min: product.min
-    }))
-  ).filter(matches);
-}
-
-function units(rows) {
-  const totals = {};
-
-  rows.forEach(row => {
-    const unit = db.products.find(
-      product => product.id === row.product
-    )?.unit || "?";
-
-    totals[unit] = (totals[unit] || 0) + row.qty;
-  });
-
-  return Object.entries(totals)
-    .map(([unit, qty]) => `${number(qty)} ${escapeHTML(unit)}`)
-    .join("<br>") || "0";
-}
+/* =====================================================
+   TABLEAU DE BORD VERTICAL
+   ===================================================== */
 
 function showDashboard() {
   const inventory = inventoryRows();
   const entries = db.entries.filter(matches);
-  const outputs = db.outputs.filter(matches);
+  const outputs = enrichedOutputs().filter(matches);
   const transfers = db.transfers.filter(matches);
 
-  const groups = {};
-  db.outputs.forEach(row => groups[invoiceKey(row)] = row);
+  const pending = db.invoice_lines.filter(line =>
+    Number(line.invoice_qty) > delivered(line.id)
+  );
 
-  const pending = Object.values(groups)
-    .filter(row => row.invoiceQty > delivered(row));
-
-  const alertDate = new Date();
-  alertDate.setDate(alertDate.getDate() + 30);
-  const expirationLimit = alertDate.toISOString().slice(0, 10);
+  const limit = new Date();
+  limit.setDate(limit.getDate() + 30);
 
   const expirations = db.entries.filter(row =>
     row.expiry &&
-    row.expiry <= expirationLimit &&
+    row.expiry <= limit.toISOString().slice(0, 10) &&
     matches(row)
   );
 
@@ -871,14 +1092,13 @@ function showDashboard() {
     ["Total produits", db.products.length],
     ["Stock disponible", units(inventory)],
     ["Dépôts", db.depots.length],
-    ["Transferts enregistrés", transfers.length]
+    ["Transferts", transfers.length]
   ];
 
   $("content").innerHTML = filterBar() + `
     <p class="muted">
-      Les dates filtrent les mouvements.
-      Le stock est actuel.
-      Les unités différentes restent séparées.
+      Les dates filtrent les mouvements, pas les stocks actuels.
+      Les unités différentes sont séparées.
     </p>
 
     <div class="vertical">
@@ -892,14 +1112,14 @@ function showDashboard() {
       ${panel("Stock par produit et dépôt", table(
         ["Produit", "Dépôt", "Disponible", "Unité"],
         inventory.map(row => [
-          escapeHTML(itemName("products", row.product)),
-          escapeHTML(itemName("depots", row.depot)),
+          escapeHTML(itemName("products", row.product_id)),
+          escapeHTML(itemName("depots", row.depot_id)),
           number(row.qty),
           escapeHTML(row.unit)
         ])
       ))}
 
-      ${panel("Liste des dépôts", table(
+      ${panel("Dépôts", table(
         ["Dépôt", "Responsable", "Téléphone"],
         db.depots
           .filter(depot =>
@@ -912,24 +1132,24 @@ function showDashboard() {
           ])
       ))}
 
-      ${panel("Tous les transferts correspondant aux filtres", table(
+      ${panel("Transferts — tous les résultats filtrés", table(
         ["Date", "Produit", "Source", "Destination", "Quantité"],
-        transfers.slice().reverse().map(row => [
+        transfers.map(row => [
           escapeHTML(row.date),
-          escapeHTML(itemName("products", row.product)),
-          escapeHTML(itemName("depots", row.source)),
-          escapeHTML(itemName("depots", row.dest)),
+          escapeHTML(itemName("products", row.product_id)),
+          escapeHTML(itemName("depots", row.source_id)),
+          escapeHTML(itemName("depots", row.dest_id)),
           number(row.qty)
         ])
       ))}
 
-      ${panel("Inventaire — alertes de stock", table(
+      ${panel("Alertes d’inventaire", table(
         ["Produit", "Dépôt", "Stock", "Seuil"],
         inventory
           .filter(row => row.qty <= row.min)
           .map(row => [
-            escapeHTML(itemName("products", row.product)),
-            escapeHTML(itemName("depots", row.depot)),
+            escapeHTML(itemName("products", row.product_id)),
+            escapeHTML(itemName("depots", row.depot_id)),
             number(row.qty),
             number(row.min)
           ])
@@ -937,30 +1157,30 @@ function showDashboard() {
 
       ${panel("Balances à livrer — toutes dates et tous dépôts", table(
         ["Facture", "Client", "Produit", "Facturé", "Livré", "Balance"],
-        pending.map(row => [
-          escapeHTML(row.invoice),
-          escapeHTML(itemName("clients", row.client)),
-          escapeHTML(itemName("products", row.product)),
-          number(row.invoiceQty),
-          number(delivered(row)),
-          number(row.invoiceQty - delivered(row))
+        pending.map(line => [
+          escapeHTML(line.invoice),
+          escapeHTML(itemName("clients", line.client_id)),
+          escapeHTML(itemName("products", line.product_id)),
+          number(line.invoice_qty),
+          number(delivered(line.id)),
+          number(Number(line.invoice_qty) - delivered(line.id))
         ])
       ))}
 
       ${panel(
-        "Dates d’expiration à surveiller",
+        "Expirations à surveiller",
         table(
           ["Produit", "Lot", "Dépôt", "Expiration"],
           expirations.map(row => [
-            escapeHTML(itemName("products", row.product)),
+            escapeHTML(itemName("products", row.product_id)),
             escapeHTML(row.lot),
-            escapeHTML(itemName("depots", row.depot)),
+            escapeHTML(itemName("depots", row.depot_id)),
             escapeHTML(row.expiry)
           ])
         ) + `
           <p class="muted">
             Réceptions expirées ou expirant dans les 30 jours.
-            Le solde des lots n’est pas calculé :
+            Pas de décompte du solde par lot :
             un lot affiché peut déjà avoir été livré.
           </p>
         `
@@ -969,39 +1189,35 @@ function showDashboard() {
   `;
 }
 
+/* =====================================================
+   LISTES ET INVENTAIRE
+   ===================================================== */
+
 function fieldValue(type, key, row) {
   const definition = schemas[type].find(field => field[0] === key);
 
-  if (
-    ["products", "depots", "clients", "suppliers"]
-      .includes(definition?.[2])
-  ) {
+  if (referenceTypes.includes(definition?.[2])) {
     return itemName(definition[2], row[key]);
-  }
-
-  if (key === "role") {
-    return row.role === "admin" ? "Administrateur" : "Utilisateur";
   }
 
   return row[key] ?? "";
 }
 
-function canWrite(type, id) {
-  return admin() ||
-    (!id && ["entries", "outputs", "transfers"].includes(type));
-}
-
 function showList() {
   const type = page;
 
-  const definitions = schemas[type].filter(
-    field => field[0] !== "password"
-  );
+  const rows = (
+    type === "outputs"
+      ? enrichedOutputs()
+      : db[type]
+  ).filter(matches);
 
-  const rows = db[type].filter(matches);
+  const definitions = schemas[type];
+  const isReference = referenceTypes.includes(type);
+  const canAdd = isReference ? admin() : true;
 
   $("content").innerHTML = `
-    ${canWrite(type) ? `
+    ${canAdd ? `
       <button class="primary" onclick="editRecord('${type}')">
         + Ajouter
       </button>
@@ -1009,20 +1225,19 @@ function showList() {
 
     ${type === "outputs" ? `
       <p class="notice">
-        L’avance est la quantité livrée cette fois.
-        Pour livrer le reliquat, ajoutez une ligne avec les mêmes
+        Avance = quantité livrée cette fois.
+        Pour livrer le reliquat, réutilisez les mêmes
         facture, client, produit et quantité facturée.
-        Les balances sont actuelles et peuvent se répéter :
-        ne les additionnez pas.
+        La balance est actuelle et peut se répéter :
+        ne l’additionnez pas.
       </p>
     ` : ""}
 
     ${filterBar()}
 
     <p class="muted">
-      ${rows.length} enregistrement(s) affiché(s).
-      Le PDF inclura toutes ces lignes,
-      sur plusieurs pages si nécessaire.
+      ${rows.length} ligne(s).
+      Le PDF contient tout le tableau affiché.
     </p>
 
     ${table(
@@ -1032,7 +1247,7 @@ function showList() {
           ? ["Livré cumulé", "Balance actuelle"]
           : []
         ),
-        ...(admin() ? ["Actions"] : [])
+        ...(isReference && admin() ? ["Actions"] : [])
       ],
 
       rows.map(row => [
@@ -1042,20 +1257,23 @@ function showList() {
 
         ...(type === "outputs"
           ? [
-              number(delivered(row)),
-              number(row.invoiceQty - delivered(row))
+              number(delivered(row.invoice_line_id)),
+              number(
+                row.invoice_qty - delivered(row.invoice_line_id)
+              )
             ]
           : []
         ),
 
-        ...(admin() ? [
+        ...(isReference && admin() ? [
           `<div class="actions">
             <button onclick="editRecord('${type}', '${row.id}')">
               Modifier
             </button>
+
             <button
               class="danger"
-              onclick="deleteRecord('${type}', '${row.id}')"
+              onclick="deleteReference('${type}', '${row.id}')"
             >Supprimer</button>
           </div>`
         ] : [])
@@ -1073,21 +1291,22 @@ function showInventory() {
     ` : ""}
 
     <p class="muted">
-      Stock = entrées − avances + transferts reçus
-      − transferts envoyés + ajustements.
+      Le stock est dérivé des mouvements enregistrés.
+      Le comptage administrateur ajuste le stock
+      au moment de sa validation.
     </p>
 
     ${filterBar()}
 
     ${table(
-      ["Produit", "Dépôt", "Disponible", "Unité", "Seuil", "État"],
+      ["Produit", "Dépôt", "Stock", "Unité", "Seuil", "État"],
       inventoryRows().map(row => [
-        escapeHTML(itemName("products", row.product)),
-        escapeHTML(itemName("depots", row.depot)),
+        escapeHTML(itemName("products", row.product_id)),
+        escapeHTML(itemName("depots", row.depot_id)),
         number(row.qty),
         escapeHTML(row.unit),
         number(row.min),
-        row.qty === 0
+        row.qty <= 0
           ? "Rupture"
           : row.qty <= row.min
             ? "Stock bas"
@@ -1098,47 +1317,27 @@ function showInventory() {
     <h2>Historique des comptages</h2>
 
     ${table(
-      [
-        "Date", "Produit", "Dépôt", "Compté", "Écart", "Motif",
-        ...(admin() ? ["Actions"] : [])
-      ],
-
-      db.adjustments
-        .filter(matches)
-        .slice()
-        .reverse()
-        .map(row => [
-          escapeHTML(row.date),
-          escapeHTML(itemName("products", row.product)),
-          escapeHTML(itemName("depots", row.depot)),
-          number(row.count),
-          number(row.delta),
-          escapeHTML(row.note),
-
-          ...(admin() ? [
-            `<button
-              onclick="deleteRecord('adjustments', '${row.id}')"
-            >Annuler</button>`
-          ] : [])
-        ])
+      ["Date", "Produit", "Dépôt", "Compté", "Écart", "Motif"],
+      db.adjustments.filter(matches).map(row => [
+        escapeHTML(row.date),
+        escapeHTML(itemName("products", row.product_id)),
+        escapeHTML(itemName("depots", row.depot_id)),
+        number(row.counted_qty),
+        number(row.delta),
+        escapeHTML(row.note)
+      ])
     )}
   `;
 }
 
-function selectOptions(type, selected) {
-  const items = type === "roles"
-    ? [
-        { id: "user", name: "Utilisateur" },
-        { id: "admin", name: "Administrateur" }
-      ]
-    : db[type];
+/* =====================================================
+   FORMULAIRES ET ÉCRITURES
+   ===================================================== */
 
+function selectOptions(type, selected) {
   return (
-    (type === "roles"
-      ? ""
-      : '<option value="">Choisir…</option>'
-    ) +
-    items.map(item => `
+    '<option value="">Choisir…</option>' +
+    db[type].map(item => `
       <option
         value="${item.id}"
         ${item.id === selected ? "selected" : ""}
@@ -1148,9 +1347,20 @@ function selectOptions(type, selected) {
 }
 
 function editRecord(type, id) {
-  if (!canWrite(type, id)) return;
+  if (id && !admin()) return;
 
-  const row = db[type].find(item => item.id === id) || {};
+  if (
+    (referenceTypes.includes(type) || type === "adjustments") &&
+    !admin()
+  ) return;
+
+  if (id && !referenceTypes.includes(type)) return;
+
+  const row = db[type]?.find(item => item.id === id) || {};
+
+  let requestId = crypto.randomUUID();
+  let lastPayload = null;
+  let saving = false;
 
   $("modal").innerHTML = `
     <h2>
@@ -1158,68 +1368,44 @@ function editRecord(type, id) {
       ${titles[type] || "Comptage"}
     </h2>
 
-    ${type === "users" ? `
-      <p class="notice">
-        Compte local, sans sécurité serveur.
-        N’utilisez pas un mot de passe personnel.
-      </p>
-    ` : ""}
-
-    ${type === "adjustments" ? `
-      <p>
-        Le stock sera immédiatement ajusté à la quantité comptée.
-        L’écart et le motif seront conservés.
-      </p>
-    ` : ""}
-
     <form id="recordForm">
       <div class="fields">
         ${schemas[type].map(
           ([key, label, fieldType = "text", required]) => {
-            let value = row[key] ??
-              (key === "date" ? today() : key === "min" ? 0 : "");
-
-            if (key === "password") value = "";
-
-            const mustFill =
-              required && !(id && key === "password");
-
-            const isSelect = [
-              "products", "depots", "clients", "suppliers", "roles"
-            ].includes(fieldType);
+            const value = row[key] ??
+              (key === "date"
+                ? today()
+                : key === "min"
+                  ? 0
+                  : ""
+              );
 
             return `
               <div>
                 <label for="field_${key}">
                   ${escapeHTML(label)}
-                  ${mustFill ? " *" : ""}
-                  ${id && key === "password"
-                    ? " — vide = inchangé"
-                    : ""}
+                  ${required ? " *" : ""}
                 </label>
 
-                ${isSelect ? `
+                ${referenceTypes.includes(fieldType) ? `
                   <select
                     id="field_${key}"
                     name="${key}"
-                    ${mustFill ? "required" : ""}
-                  >${selectOptions(fieldType, value)}</select>
+                    ${required ? "required" : ""}
+                  >
+                    ${selectOptions(fieldType, value)}
+                  </select>
                 ` : `
                   <input
                     id="field_${key}"
                     name="${key}"
                     type="${fieldType}"
                     value="${escapeHTML(value)}"
-
                     ${fieldType === "number"
                       ? 'min="0" step="0.001"'
-                      : ""}
-
-                    ${key === "password"
-                      ? 'minlength="8" autocomplete="new-password"'
-                      : ""}
-
-                    ${mustFill ? "required" : ""}
+                      : ""
+                    }
+                    ${required ? "required" : ""}
                   >
                 `}
               </div>
@@ -1231,319 +1417,240 @@ function editRecord(type, id) {
       <p id="formError" class="error"></p>
 
       <div class="footer">
-        <button type="button" onclick="closeModal()">Annuler</button>
-        <button type="submit" class="primary">Enregistrer</button>
+        <button id="cancelButton" type="button">
+          Annuler
+        </button>
+
+        <button id="saveButton" class="primary" type="submit">
+          Enregistrer
+        </button>
       </div>
     </form>
   `;
 
   $("modal").showModal();
 
-  $("recordForm").onsubmit = event =>
-    submitRecord(event, type, id);
-}
+  $("cancelButton").onclick = () => {
+    if (!saving) $("modal").close();
+  };
 
-function closeModal() {
-  $("modal").close();
-}
+  $("modal").oncancel = event => {
+    if (saving) event.preventDefault();
+  };
 
-function validateDatabase() {
-  if (!db.users.some(account => account.role === "admin")) {
-    throw new Error("Conservez au moins un administrateur.");
-  }
+  $("recordForm").onsubmit = async event => {
+    event.preventDefault();
+    if (saving) return;
 
-  const logins = db.users.map(account => account.login);
-
-  if (new Set(logins).size !== logins.length) {
-    throw new Error("Cet identifiant existe déjà.");
-  }
-
-  for (const type of ["products", "depots", "clients", "suppliers"]) {
-    const names = db[type].map(row =>
-      (type === "products" ? row.sku : row.name)
-        .trim()
-        .toLowerCase()
-    );
-
-    if (new Set(names).size !== names.length) {
-      throw new Error("Référence ou nom déjà utilisé.");
-    }
-  }
-
-  for (const product of db.products) {
-    for (const depot of db.depots) {
-      if (stock(product.id, depot.id) < -0.00001) {
-        throw new Error(
-          `Stock insuffisant : ${product.name} / ${depot.name}`
-        );
-      }
-    }
-  }
-
-  const invoices = {};
-
-  for (const row of db.outputs) {
-    const key = invoiceKey(row);
-
-    if (!invoices[key]) {
-      invoices[key] = {
-        quantity: row.invoiceQty,
-        delivered: 0
-      };
-    }
-
-    if (
-      Math.abs(invoices[key].quantity - row.invoiceQty) > 0.00001
-    ) {
-      throw new Error(
-        "La quantité facturée doit rester identique pour " +
-        "cette facture, ce client et ce produit."
-      );
-    }
-
-    invoices[key].delivered += row.qty;
-
-    if (
-      invoices[key].delivered >
-      invoices[key].quantity + 0.00001
-    ) {
-      throw new Error("La livraison dépasse la balance à livrer.");
-    }
-  }
-}
-
-function auditCopy(value) {
-  return JSON.parse(JSON.stringify(
-    value,
-    (key, item) =>
-      ["hash", "salt"].includes(key) ? undefined : item
-  ));
-}
-
-async function submitRecord(event, type, id) {
-  event.preventDefault();
-  if (!canWrite(type, id)) return;
-
-  const backup = JSON.stringify(db);
-  const button = event.target.querySelector('[type="submit"]');
-  button.disabled = true;
-
-  try {
-    let row = Object.fromEntries(new FormData(event.target));
-
-    Object.keys(row).forEach(key => {
-      if (key !== "password") row[key] = row[key].trim();
-    });
+    const payload = Object.fromEntries(new FormData(event.target));
 
     for (const [key, , fieldType, required] of schemas[type]) {
-      if (
-        required &&
-        key !== "password" &&
-        row[key] === ""
-      ) {
-        throw new Error("Remplissez tous les champs obligatoires.");
+      if (typeof payload[key] === "string") {
+        payload[key] = payload[key].trim();
+      }
+
+      if (required && !String(payload[key] ?? "").trim()) {
+        $("formError").textContent =
+          "Remplissez les champs obligatoires.";
+        return;
       }
 
       if (fieldType === "number") {
-        row[key] = Number(row[key]);
+        payload[key] = Number(payload[key]);
 
-        if (!Number.isFinite(row[key]) || row[key] < 0) {
-          throw new Error("Quantité invalide.");
+        if (!Number.isFinite(payload[key]) || payload[key] < 0) {
+          $("formError").textContent = "Quantité invalide.";
+          return;
         }
       }
     }
 
     if (
       ["entries", "outputs", "transfers"].includes(type) &&
-      row.qty <= 0
+      payload.qty <= 0
     ) {
-      throw new Error("La quantité doit être supérieure à zéro.");
-    }
-
-    if (type === "transfers" && row.source === row.dest) {
-      throw new Error("Choisissez deux dépôts différents.");
-    }
-
-    if (
-      type === "entries" &&
-      row.expiry &&
-      row.expiry < row.date
-    ) {
-      throw new Error("Expiration antérieure à la réception.");
-    }
-
-    const previous = db[type].find(item => item.id === id);
-
-    if (type === "users") {
-      row.login = row.login.toLowerCase();
-
-      if (id === user.id && row.role !== "admin") {
-        throw new Error(
-          "Vous ne pouvez pas retirer votre propre rôle administrateur."
-        );
-      }
-
-      if (row.password) {
-        if (row.password.length < 8) {
-          throw new Error("Mot de passe trop court.");
-        }
-
-        row.salt = uid();
-        row.hash = await passwordHash(row.password, row.salt);
-      } else if (!id) {
-        throw new Error("Mot de passe obligatoire.");
-      }
-
-      delete row.password;
-    }
-
-    if (type === "adjustments") {
-      row.delta = row.count - stock(row.product, row.depot);
-    }
-
-    row = {
-      ...previous,
-      ...row,
-      id: id || uid(),
-      updatedAt: new Date().toISOString(),
-      by: user.name
-    };
-
-    if (id) {
-      const index = db[type].findIndex(item => item.id === id);
-      db[type][index] = row;
-    } else {
-      db[type].push(row);
-    }
-
-    validateDatabase();
-
-    db.audit.push({
-      id: uid(),
-      date: new Date().toISOString(),
-      user: user.name,
-      action: id ? "Modification" : "Création",
-      type,
-      record: row.id,
-      before: previous ? auditCopy(previous) : null,
-      after: auditCopy(row)
-    });
-
-    save();
-
-    if (type === "users" && id === user.id) {
-      user = row;
-    }
-
-    closeModal();
-    render();
-  } catch (error) {
-    db = JSON.parse(backup);
-    $("formError").textContent = error.message;
-  } finally {
-    button.disabled = false;
-  }
-}
-
-function deleteRecord(type, id) {
-  if (!admin()) return;
-
-  if (type === "users" && id === user.id) {
-    alert("Vous ne pouvez pas supprimer votre propre compte.");
-    return;
-  }
-
-  if (["products", "depots", "clients", "suppliers"].includes(type)) {
-    const key = {
-      products: "product",
-      depots: "depot",
-      clients: "client",
-      suppliers: "supplier"
-    }[type];
-
-    const used = [
-      "entries", "outputs", "transfers", "adjustments"
-    ].some(module =>
-      db[module].some(row =>
-        row[key] === id ||
-        (
-          type === "depots" &&
-          [row.source, row.dest].includes(id)
-        )
-      )
-    );
-
-    if (used) {
-      alert("Cet élément est utilisé par un mouvement.");
+      $("formError").textContent =
+        "La quantité doit être supérieure à zéro.";
       return;
     }
-  }
 
-  const reason = prompt(
-    "Motif obligatoire de suppression / annulation :"
-  );
+    const serializedPayload = JSON.stringify(payload);
 
-  if (!reason?.trim()) return;
+    if (
+      lastPayload !== null &&
+      lastPayload !== serializedPayload
+    ) {
+      requestId = crypto.randomUUID();
+    }
+
+    lastPayload = serializedPayload;
+
+    saving = true;
+    $("saveButton").disabled = true;
+    $("cancelButton").disabled = true;
+    $("formError").textContent = "";
+
+    let committed = false;
+
+    try {
+      if (referenceTypes.includes(type)) {
+        const response = id
+          ? await client
+              .from(type)
+              .update(payload)
+              .eq("id", id)
+              .select("id")
+              .single()
+
+          : await client
+              .from(type)
+              .insert({
+                id: requestId,
+                ...payload
+              })
+              .select("id")
+              .single();
+
+        if (response.error) throw response.error;
+      } else {
+        const { error } = await client.rpc(
+          "stockpro_add_movement",
+          {
+            p_kind: type,
+            p_data: payload,
+            p_request_id: requestId
+          }
+        );
+
+        if (error) throw error;
+      }
+
+      committed = true;
+      $("modal").close();
+
+      showStatus(
+        "Enregistrement confirmé dans Supabase. Actualisation…"
+      );
+
+      const epoch = sessionEpoch;
+      const nextData = await fetchData();
+
+      if (epoch !== sessionEpoch) return;
+
+      db = nextData;
+      loadedAt = new Date();
+
+      render();
+
+      showStatus(
+        "Enregistrement effectué et données actualisées."
+      );
+    } catch (error) {
+      if (committed) {
+        showStatus(
+          "Enregistrement confirmé, mais affichage non actualisé : " +
+          error.message +
+          ". Ne recréez pas ce mouvement ; cliquez sur Actualiser.",
+          true
+        );
+      } else if ($("formError")) {
+        $("formError").textContent =
+          error.message +
+          " En cas de coupure réseau, réessayez sans fermer " +
+          "le formulaire ni modifier les valeurs.";
+      } else {
+        showStatus(error.message, true);
+      }
+    } finally {
+      saving = false;
+
+      if ($("saveButton")) {
+        $("saveButton").disabled = false;
+      }
+
+      if ($("cancelButton")) {
+        $("cancelButton").disabled = false;
+      }
+    }
+  };
+}
+
+async function deleteReference(type, id) {
+  if (!admin() || !referenceTypes.includes(type)) return;
 
   if (!confirm(
-    "Confirmer ? Le stock sera recalculé et une trace sera conservée."
+    "Supprimer cet élément ? La base bloquera la suppression " +
+    "s’il est utilisé par un mouvement."
   )) return;
 
-  const backup = JSON.stringify(db);
-
   try {
-    const previous = db[type].find(row => row.id === id);
+    const { data, error } = await client
+      .from(type)
+      .delete()
+      .eq("id", id)
+      .select("id");
 
-    db[type] = db[type].filter(row => row.id !== id);
+    if (error) throw error;
 
-    validateDatabase();
+    if (!data.length) {
+      throw new Error("Élément absent ou accès refusé.");
+    }
 
-    db.audit.push({
-      id: uid(),
-      date: new Date().toISOString(),
-      user: user.name,
-      action: "Annulation / suppression",
-      type,
-      record: id,
-      reason,
-      before: auditCopy(previous)
-    });
-
-    save();
-    render();
+    showStatus("Suppression confirmée.");
+    await refresh();
   } catch (error) {
-    db = JSON.parse(backup);
-    alert(error.message);
+    showStatus("Suppression refusée : " + error.message, true);
   }
 }
+
+/* =====================================================
+   HISTORIQUE
+   ===================================================== */
 
 function showAudit() {
   $("content").innerHTML = `
     <p class="muted">
-      Historique local non inviolable :
-      le propriétaire du navigateur peut modifier son stockage.
+      Historique serveur des mouvements créés.
+      Les modifications des listes de référence
+      ne sont pas encore journalisées.
     </p>
 
     ${table(
-      ["Date", "Utilisateur", "Action", "Module", "Motif", "Détail"],
+      [
+        "Date",
+        "Utilisateur (UUID)",
+        "Action",
+        "Module",
+        "Référence",
+        "Motif",
+        "Détail"
+      ],
 
-      db.audit.slice().reverse().map(row => [
-        escapeHTML(new Date(row.date).toLocaleString("fr-FR")),
-        escapeHTML(row.user),
-        escapeHTML(row.action),
-        escapeHTML(titles[row.type] || row.type),
-        escapeHTML(row.reason),
+      db.audit_log
+        .slice()
+        .sort((a, b) =>
+          b.created_at.localeCompare(a.created_at)
+        )
+        .map(row => [
+          escapeHTML(
+            new Date(row.created_at).toLocaleString("fr-FR")
+          ),
+          escapeHTML(row.actor_id),
+          escapeHTML(row.action),
+          escapeHTML(row.entity_type),
+          escapeHTML(row.entity_id),
+          escapeHTML(row.reason),
 
-        `<button onclick="auditDetail('${row.id}')">
-          Voir
-        </button>`
-      ])
+          `<button onclick="auditDetail('${row.id}')">
+            Voir
+          </button>`
+        ])
     )}
   `;
 }
 
 function auditDetail(id) {
-  const record = db.audit.find(row => row.id === id);
+  const record = db.audit_log.find(row => row.id === id);
 
   $("modal").innerHTML = `
     <h2>Détail de l’opération</h2>
@@ -1552,37 +1659,21 @@ function auditDetail(id) {
       escapeHTML(JSON.stringify(record, null, 2))
     }</pre>
 
-    <button onclick="closeModal()">Fermer</button>
+    <button id="closeAudit">Fermer</button>
   `;
 
+  $("modal").oncancel = null;
   $("modal").showModal();
+
+  $("closeAudit").onclick = () => $("modal").close();
 }
 
-function printHTML(title, content) {
-  $("print").innerHTML = `
-    <h1>${escapeHTML(db.company)}</h1>
-    <h2>${escapeHTML(title)}</h2>
-
-    <p>
-      Édité le ${escapeHTML(new Date().toLocaleString("fr-FR"))}
-    </p>
-
-    ${content}
-
-    <p style="margin-top:35px">
-      Signature / cachet : __________________________
-    </p>
-  `;
-
-  window.print();
-}
-
-function printRecord(type, id) {
-  printPage();
-}
+/* =====================================================
+   EXPORT PDF DE TOUT LE TABLEAU AFFICHÉ
+   ===================================================== */
 
 function printPage() {
-  if (!user || page === "settings") return;
+  if (!profile || page === "settings") return;
 
   const copy = $("content").cloneNode(true);
 
@@ -1593,7 +1684,9 @@ function printPage() {
     const lastHeader =
       item.querySelector("thead tr")?.lastElementChild;
 
-    if (["Actions", "Détail"].includes(lastHeader?.textContent)) {
+    if (
+      ["Actions", "Détail"].includes(lastHeader?.textContent)
+    ) {
       item.querySelectorAll("tr").forEach(row =>
         row.lastElementChild?.remove()
       );
@@ -1603,348 +1696,201 @@ function printPage() {
   const active =
     filters.q || filters.depot || filters.from || filters.to;
 
-  let information = `
+  $("print").innerHTML = `
+    <h1>StockPro</h1>
+    <h2>${escapeHTML(titles[page])}</h2>
+
+    <p>
+      Édité par ${escapeHTML(profile.name)}
+      le ${escapeHTML(new Date().toLocaleString("fr-FR"))}.
+    </p>
+
+    <p>
+      Données chargées le
+      ${escapeHTML(loadedAt?.toLocaleString("fr-FR") || "—")}.
+    </p>
+
     <p>
       ${active
-        ? "Export de tous les résultats correspondant aux filtres actifs."
-        : "Export complet de la rubrique, sans filtre."
+        ? "Tous les résultats correspondant aux filtres actifs."
+        : "Toutes les lignes de la rubrique, sans filtre."
       }
     </p>
-  `;
 
-  if (active) {
-    information += `
+    ${active ? `
       <p>
         Recherche : ${escapeHTML(filters.q || "—")} ·
+
         Dépôt : ${escapeHTML(
           filters.depot
             ? itemName("depots", filters.depot)
             : "Tous"
         )} ·
+
         Du : ${escapeHTML(filters.from || "—")} ·
         Au : ${escapeHTML(filters.to || "—")}
       </p>
-    `;
-  }
+    ` : ""}
 
-  if (page === "outputs") {
-    information += `
-      <p>
-        Avance = quantité livrée sur chaque ligne.
-        La balance actuelle peut être répétée sur plusieurs lignes
-        et ne doit pas être additionnée.
-      </p>
-    `;
-  }
+    ${copy.innerHTML}
 
-  printHTML(titles[page], information + copy.innerHTML);
+    <p style="margin-top:30px">
+      Signature / cachet : __________________________
+    </p>
+  `;
+
+  window.print();
 }
+
+/* =====================================================
+   PARAMÈTRES ET LIMITES DE CETTE VERSION
+   ===================================================== */
 
 function showSettings() {
   $("content").innerHTML = `
     <div class="vertical">
-      ${panel("Entreprise", `
-        <label>Nom de l’entreprise</label>
-
-        <input
-          id="companyName"
-          value="${escapeHTML(db.company)}"
-        >
-
-        <button
-          class="primary"
-          style="margin-top:10px"
-          onclick="changeCompany()"
-        >Enregistrer</button>
-      `)}
-
-      ${panel("Sauvegarde", `
+      ${panel("Connexion et données partagées", `
         <p>
-          Exportez régulièrement vos données.
-          La sauvegarde contient les données et les empreintes
-          des mots de passe : conservez-la dans un lieu privé.
+          Les données sont enregistrées dans Supabase,
+          pas dans l’ancien stockage local.
+          Le même compte peut être utilisé sur les appareils autorisés.
+          Une connexion Internet est nécessaire.
         </p>
 
-        <button class="primary" onclick="exportBackup()">
-          Exporter une sauvegarde JSON
-        </button>
-
-        <h2>Restauration</h2>
-
         <p>
-          Remplace les données actuelles et vous déconnecte.
-          Exportez d’abord une sauvegarde si nécessaire.
+          Cliquez sur Actualiser pour récupérer les changements
+          faits sur un autre appareil.
+          L’actualisation automatique en temps réel
+          n’est pas encore activée.
         </p>
-
-        <input
-          id="backupFile"
-          type="file"
-          accept=".json,application/json"
-        >
-
-        <button
-          style="margin-top:10px"
-          onclick="restoreBackup()"
-        >Restaurer une sauvegarde</button>
       `)}
 
-      ${panel("Démarrage et limites", `
+      ${panel("Comptes utilisateurs", `
+        <p>
+          Pour cette version, créez les comptes dans
+          Supabase → Authentication → Users.
+          Ajoutez ensuite leur UUID dans profiles avec le rôle
+          user ou admin.
+        </p>
+
+        <p>
+          La gestion des comptes depuis l’application
+          n’est pas encore implémentée.
+          Aucune clé secrète ne doit être ajoutée à cette page.
+        </p>
+      `)}
+
+      ${panel("Démarrage", `
         <ol>
-          <li>Créez vos dépôts, produits, fournisseurs et clients.</li>
-          <li>Enregistrez les entrées pour alimenter le stock.</li>
           <li>
-            Dans Sorties, saisissez l’avance livrée cette fois.
-            Facture 800 et avance 600 :
-            balance 200, stock diminué de 600.
+            Ajoutez les dépôts, produits, fournisseurs et clients.
           </li>
+
           <li>
-            Pour livrer le reliquat, réutilisez les mêmes
+            Enregistrez une entrée pour alimenter le stock.
+          </li>
+
+          <li>
+            Enregistrez une livraison :
+            l’avance diminue le stock et la balance
+            est contrôlée dans Supabase.
+          </li>
+
+          <li>
+            Pour les livraisons suivantes, réutilisez les mêmes
             facture, client, produit et quantité facturée.
           </li>
+
           <li>
-            Pour un PDF complet, effacez les filtres puis appuyez sur
-            « Exporter le tableau en PDF ».
-            Choisissez « Enregistrer au format PDF »
-            dans la fenêtre d’impression.
+            Pour les PDF, effacez les filtres si nécessaire
+            puis utilisez Exporter le tableau en PDF.
+            Dans la fenêtre d’impression,
+            choisissez Enregistrer au format PDF.
           </li>
         </ol>
+      `)}
 
+      ${panel("Limites de cette étape", `
         <p>
-          Une ligne correspond à un produit.
-          Les documents multiproduits se saisissent en plusieurs lignes.
-          Les sorties ne sont pas ventilées par lot.
-          Les alertes d’expiration sont indicatives.
+          Les créations de mouvements sont activées.
+          Les modifications et annulations de mouvements
+          ne sont pas encore disponibles :
+          leurs fonctions serveur sécurisées restent à créer.
         </p>
 
         <p>
-          Les contrôles de stock portent sur le solde actuel,
+          Les anciennes données et les comptes locaux
+          ne sont pas importés automatiquement.
+          Conservez votre sauvegarde JSON et votre ancien fichier HTML.
+          Ne recréez pas vos mouvements historiques au hasard.
+        </p>
+
+        <p>
+          Les produits, dépôts, clients et fournisseurs
+          sont modifiables uniquement par l’administrateur.
+          Les modifications de ces listes ne sont pas encore
+          journalisées et n’ont pas de contrôle de version optimiste.
+        </p>
+
+        <p>
+          Le stock est contrôlé sur sa situation actuelle,
           pas sur chaque solde historique.
-          Les comptages administrateur ajustent immédiatement le stock.
+          Le suivi des expirations reste indicatif :
+          les sorties ne sont pas ventilées par lot.
         </p>
 
         <p>
-          Les utilisateurs consultent et ajoutent les mouvements.
-          Seul l’administrateur gère les listes, les comptes,
-          les modifications, les annulations et les ajustements.
-          Ces restrictions restent locales, sans sécurité serveur.
-        </p>
-
-        <p>
-          Héberger cette page ne partage pas les comptes et les données.
-          Une base de données et une authentification serveur
-          sont nécessaires pour une utilisation simultanée sécurisée.
-        </p>
-
-        <p>
-          Les données restent dans le navigateur et sous la même
-          adresse de site. Ne videz pas le stockage du navigateur.
-          Pour changer de navigateur ou d’adresse,
-          exportez une sauvegarde et restaurez-la.
-        </p>
-
-        <p>
-          Version : tableau de bord vertical et PDF complets par rubrique.
+          Le chargement des tables utilise plusieurs requêtes.
+          Les tableaux et PDF représentent les données chargées,
+          pas une photographie transactionnelle de toute la base.
+          La validation des nouvelles écritures est effectuée
+          par la fonction serveur.
         </p>
       `)}
     </div>
   `;
 }
 
-function changeCompany() {
-  if (!admin()) return;
+/* =====================================================
+   DÉMARRAGE
+   ===================================================== */
 
-  const value = $("companyName").value.trim();
-  if (!value) return;
-
-  const previous = db.company;
-
+(async () => {
   try {
-    db.company = value;
-    save();
-    render();
+    if (!window.supabase) {
+      throw new Error(
+        "Chargement de la bibliothèque Supabase impossible. " +
+        "Vérifiez votre connexion puis rechargez la page."
+      );
+    }
+
+    client = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLIC_KEY
+    );
+
+    $("app").innerHTML = `
+      <main>
+        <h1>StockPro</h1>
+        <p>Connexion à Supabase…</p>
+      </main>
+    `;
+
+    await openSession();
   } catch (error) {
-    db.company = previous;
-    alert("Enregistrement impossible.");
+    if (client) {
+      showLogin();
+    } else {
+      $("app").innerHTML = `
+        <main>
+          <h1>StockPro</h1>
+        </main>
+      `;
+    }
+
+    showStatus(error.message, true);
   }
-}
-
-function exportBackup() {
-  if (!admin()) return;
-
-  const blob = new Blob(
-    [JSON.stringify(db, null, 2)],
-    { type: "application/json" }
-  );
-
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = "stockpro-sauvegarde-" + today() + ".json";
-  link.click();
-
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-async function restoreBackup() {
-  if (!admin()) return;
-
-  const file = $("backupFile").files[0];
-
-  if (!file) {
-    alert("Choisissez une sauvegarde JSON.");
-    return;
-  }
-
-  if (!confirm(
-    "Remplacer toutes les données actuelles ? " +
-    "Exportez-les d’abord si nécessaire."
-  )) return;
-
-  const previous = db;
-
-  try {
-    const data = JSON.parse(await file.text());
-
-    const modules = [
-      "users", "products", "depots", "clients", "suppliers",
-      "entries", "outputs", "transfers", "adjustments", "audit"
-    ];
-
-    if (
-      data.version !== 1 ||
-      typeof data.company !== "string" ||
-      !modules.every(key => Array.isArray(data[key]))
-    ) {
-      throw new Error("Format de sauvegarde invalide.");
-    }
-
-    for (const module of modules) {
-      const ids = data[module].map(row => row.id);
-
-      if (
-        ids.some(id => typeof id !== "string" || !id) ||
-        new Set(ids).size !== ids.length
-      ) {
-        throw new Error("Identifiants invalides dans " + module);
-      }
-    }
-
-    if (
-      !data.users.length ||
-      data.users.some(account =>
-        typeof account.login !== "string" ||
-        !account.login ||
-        !account.hash ||
-        !account.salt ||
-        !["admin", "user"].includes(account.role)
-      )
-    ) {
-      throw new Error("Comptes invalides.");
-    }
-
-    for (const type of [
-      "products", "depots", "clients", "suppliers"
-    ]) {
-      if (data[type].some(row =>
-        typeof row.name !== "string" ||
-        !row.name.trim()
-      )) {
-        throw new Error("Nom invalide dans " + type);
-      }
-    }
-
-    for (const product of data.products) {
-      if (
-        typeof product.sku !== "string" ||
-        !product.sku.trim() ||
-        typeof product.unit !== "string" ||
-        !product.unit.trim() ||
-        !Number.isFinite(product.min) ||
-        product.min < 0
-      ) {
-        throw new Error("Produit invalide.");
-      }
-    }
-
-    for (const type of [
-      "entries", "outputs", "transfers", "adjustments"
-    ]) {
-      for (const row of data[type]) {
-        if (!data.products.some(product =>
-          product.id === row.product
-        )) {
-          throw new Error("Produit introuvable dans un mouvement.");
-        }
-
-        const depotIds = type === "transfers"
-          ? [row.source, row.dest]
-          : [row.depot];
-
-        if (depotIds.some(id =>
-          !data.depots.some(depot => depot.id === id)
-        )) {
-          throw new Error("Dépôt introuvable dans un mouvement.");
-        }
-
-        if (type === "adjustments") {
-          if (
-            !Number.isFinite(row.delta) ||
-            !Number.isFinite(row.count) ||
-            row.count < 0
-          ) {
-            throw new Error("Ajustement invalide.");
-          }
-        } else if (
-          !Number.isFinite(row.qty) ||
-          row.qty <= 0
-        ) {
-          throw new Error("Quantité invalide.");
-        }
-
-        if (
-          type === "transfers" &&
-          row.source === row.dest
-        ) {
-          throw new Error("Transfert invalide.");
-        }
-
-        if (
-          type === "entries" &&
-          !data.suppliers.some(supplier =>
-            supplier.id === row.supplier
-          )
-        ) {
-          throw new Error("Fournisseur introuvable.");
-        }
-
-        if (type === "outputs") {
-          if (
-            typeof row.invoice !== "string" ||
-            !row.invoice.trim() ||
-            !Number.isFinite(row.invoiceQty) ||
-            row.invoiceQty <= 0 ||
-            !data.clients.some(client => client.id === row.client)
-          ) {
-            throw new Error("Livraison invalide.");
-          }
-        }
-      }
-    }
-
-    db = data;
-    validateDatabase();
-    save();
-
-    user = null;
-    showLogin();
-  } catch (error) {
-    db = previous;
-    alert("Restauration refusée : " + error.message);
-  }
-}
-
-showLogin();
+})();
 </script>
 </body>
 </html>
