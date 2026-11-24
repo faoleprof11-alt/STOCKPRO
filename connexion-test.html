@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>StockPro — Test de connexion</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: #f1f5f9;
+  color: #20394c;
+  font: 16px Arial, sans-serif;
+}
+
+main {
+  max-width: 520px;
+  margin: 30px auto;
+  padding: 25px;
+  background: white;
+  border-radius: 12px;
+}
+
+label {
+  display: block;
+  margin-top: 18px;
+  margin-bottom: 6px;
+}
+
+input,
+button {
+  width: 100%;
+  padding: 12px;
+  font: inherit;
+  border: 1px solid #b9cbd8;
+  border-radius: 6px;
+}
+
+button {
+  margin-top: 20px;
+  background: #087f68;
+  color: white;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: .5;
+}
+
+p {
+  line-height: 1.6;
+}
+
+#result {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.success {
+  color: #087f68;
+}
+
+.error {
+  color: #b12339;
+}
+</style>
+</head>
+
+<body>
+<main>
+  <h1>StockPro</h1>
+  <h2>Test de connexion Supabase</h2>
+
+  <p>
+    Utilisez le compte créé dans Supabase,
+    pas l’ancien compte local de StockPro.
+  </p>
+
+  <form id="loginForm">
+    <label for="email">Adresse e-mail Supabase</label>
+    <input
+      id="email"
+      type="email"
+      autocomplete="username"
+      required
+    >
+
+    <label for="password">Mot de passe Supabase</label>
+    <input
+      id="password"
+      type="password"
+      autocomplete="current-password"
+      required
+    >
+
+    <button id="connectButton" type="submit">
+      Tester la connexion
+    </button>
+  </form>
+
+  <p id="result" role="status"></p>
+
+  <p>
+    Cette page ne modifie pas les produits
+    et ne transfère pas encore vos anciennes données.
+  </p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+"use strict";
+
+const SUPABASE_URL =
+  "https://qcrcuncmgfxojdhcdtno.supabase.co";
+
+const SUPABASE_PUBLIC_KEY =
+  "sb_publishable_5Gugsp17R5waoCb_osr1Kg_v8daehTW";
+
+const result = document.getElementById("result");
+const button = document.getElementById("connectButton");
+
+let client = null;
+
+function showResult(message, success = false) {
+  result.textContent = message;
+  result.className = success ? "success" : "error";
+}
+
+try {
+  if (!window.supabase) {
+    throw new Error(
+      "La bibliothèque Supabase ne s’est pas chargée. " +
+      "Vérifiez votre connexion Internet et rechargez la page."
+    );
+  }
+
+  // Session indépendante de celle de la future application.
+  // Ce test ne conserve pas la connexion après rechargement.
+
+  client = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLIC_KEY,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
+    }
+  );
+} catch (error) {
+  button.disabled = true;
+  showResult(error.message);
+}
+
+document.getElementById("loginForm").onsubmit = async event => {
+  event.preventDefault();
+
+  if (!client) return;
+
+  button.disabled = true;
+  result.className = "";
+  result.textContent = "Vérification en cours…";
+
+  try {
+    const email =
+      document.getElementById("email").value.trim();
+
+    const password =
+      document.getElementById("password").value;
+
+    const {
+      data: loginData,
+      error: loginError
+    } = await client.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (loginError) {
+      throw loginError;
+    }
+
+    document.getElementById("password").value = "";
+
+    const {
+      data: profile,
+      error: profileError
+    } = await client
+      .from("profiles")
+      .select("id, name, role")
+      .eq("id", loginData.user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      throw profileError;
+    }
+
+    if (!profile) {
+      throw new Error(
+        "Connexion réussie, mais aucun profil autorisé " +
+        "n’a été trouvé pour ce compte. " +
+        "Vérifiez l’UUID utilisé dans la table profiles."
+      );
+    }
+
+    const {
+      count,
+      error: productsError
+    } = await client
+      .from("products")
+      .select("id", {
+        count: "exact",
+        head: true
+      });
+
+    if (productsError) {
+      throw productsError;
+    }
+
+    showResult(
+      "Connexion réussie.\n\n" +
+      "Nom : " + profile.name + "\n" +
+      "Rôle : " + profile.role + "\n" +
+      "Table produits accessible.\n" +
+      "Nombre de produits : " + count,
+      true
+    );
+  } catch (error) {
+    showResult(
+      "Le test n’a pas abouti :\n" + error.message
+    );
+  } finally {
+    if (client) {
+      try {
+        await client.auth.signOut({
+          scope: "local"
+        });
+      } catch (error) {}
+    }
+
+    button.disabled = false;
+  }
+};
+</script>
+</body>
+</html>
