@@ -24,7 +24,8 @@ th{background:var(--blue);color:white}tr:nth-child(even){background:#edf3f9}.too
 .auth input{margin:5px 0 16px}dialog{width:min(850px,96vw);max-height:90vh;overflow:auto;padding:24px;border:0;border-radius:12px}
 dialog::backdrop{background:#102c4099}.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
 .footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.error{color:#af2037}.success{color:var(--green)}
-.cancelled{color:#af2539;font-weight:700}#status{padding:0 22px 12px;white-space:pre-wrap;overflow-wrap:anywhere}#print{display:none}
+.cancelled{color:#af2539;font-weight:700}.active{color:var(--green);font-weight:700}.inactive{color:#af2539;font-weight:700}
+#status{padding:0 22px 12px;white-space:pre-wrap;overflow-wrap:anywhere}#print{display:none}
 @media(max-width:760px){.shell{display:block}aside{padding:12px}aside h2{display:none}main{padding:14px}}
 @media print{body>*{display:none!important}#print{display:block!important;background:white;color:black}#print .scroll{overflow:visible!important}
 #print table{width:100%;table-layout:fixed;white-space:normal;font-size:8px}#print td,#print th{padding:5px 3px;white-space:normal;overflow-wrap:anywhere;vertical-align:top}
@@ -53,7 +54,7 @@ const escapeHTML=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<
 const number=value=>Number(value).toLocaleString("fr-FR",{maximumFractionDigits:3});
 const today=()=>{const d=new Date();return[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")};
 
-let client=null,user=null,profile=null,page="dashboard",db={},loadedAt=null,sessionEpoch=0,refreshBusy=false;
+let client=null,user=null,profile=null,page="dashboard",db={},loadedAt=null,sessionEpoch=0,refreshBusy=false,realtimeChannel=null,refreshTimer=null,realtimeTimer=null;
 let filters={q:"",depot:"",from:"",to:""};
 
 const admin=()=>profile?.role==="admin";
@@ -61,7 +62,7 @@ const movementTypes=["entries","outputs","transfers","adjustments"];
 const referenceTypes=["products","depots","clients","suppliers"];
 const active=row=>row?.status!=="cancelled";
 
-const titles={dashboard:"Tableau de bord",entries:"Entrées",outputs:"Sorties et livraisons",transfers:"Transferts",inventory:"Inventaire",products:"Produits",depots:"Dépôts",clients:"Clients",suppliers:"Fournisseurs",audit:"Historique",settings:"Comptes et paramètres"};
+const titles={dashboard:"Tableau de bord",entries:"Entrées",outputs:"Sorties et livraisons",transfers:"Transferts",inventory:"Inventaire",products:"Produits",depots:"Dépôts",clients:"Clients",suppliers:"Fournisseurs",accounts:"Comptes",audit:"Historique",settings:"Paramètres"};
 
 const schemas={
 products:[["name","Produit","text",1],["sku","Référence / SKU","text",1],["unit","Unité : sac, carton, pièce…","text",1],["min","Seuil de stock bas","number",1]],
@@ -81,15 +82,28 @@ $("loginForm").onsubmit=async e=>{e.preventDefault();const button=e.target.query
 
 async function readAll(table){const rows=[];for(let start=0;;start+=500){const{data,error}=await client.from(table).select("*").order("id").range(start,start+499);if(error)throw Error(table+" : "+error.message);rows.push(...data);if(data.length<500)break}return rows}
 
-async function fetchData(){const result={};const tables=[...referenceTypes,"entries","invoice_lines","outputs","transfers","adjustments"];if(admin())tables.push("audit_log");for(const table of tables)result[table]=await readAll(table);result.audit_log=result.audit_log||[];return result}
+async function fetchData(){const result={};const tables=[...referenceTypes,"entries","invoice_lines","outputs","transfers","adjustments"];if(admin()){tables.push("audit_log");tables.push("profiles")}
+for(const table of tables)result[table]=await readAll(table);result.audit_log=result.audit_log||[];result.profiles=result.profiles||[];return result}
 
-async function openSession(){const epoch=++sessionEpoch;const{data:{session},error}=await client.auth.getSession();if(error)throw error;if(!session){user=null;profile=null;db={};showLogin();return}
+async function openSession(){const epoch=++sessionEpoch;const{data:{session},error}=await client.auth.getSession();if(error)throw error;if(!session){user=null;profile=null;db={};stopRealtime();showLogin();return}
 const{data:account,error:profileError}=await client.from("profiles").select("id,name,role").eq("id",session.user.id).maybeSingle();if(profileError)throw profileError;if(!account)throw Error("Compte connecté sans profil autorisé. Vérifiez son UUID dans la table profiles.");if(epoch!==sessionEpoch)return;
-user=session.user;profile=account;const next=await fetchData();if(epoch!==sessionEpoch)return;db=next;loadedAt=new Date();render();showStatus("Connexion réussie. Données chargées depuis Supabase.")}
+user=session.user;profile=account;const next=await fetchData();if(epoch!==sessionEpoch)return;db=next;loadedAt=new Date();render();startRealtime();startAutoRefresh();showStatus("Connexion réussie. Actualisation automatique activée.")}
 
-async function refresh(){if(refreshBusy||!profile)return;refreshBusy=true;showStatus("Actualisation…");const epoch=sessionEpoch;try{const next=await fetchData();if(epoch!==sessionEpoch)return;db=next;loadedAt=new Date();render();showStatus("Données actualisées.")}catch(x){showStatus("Actualisation impossible : "+x.message,true)}finally{refreshBusy=false}}
+async function refresh(silent=false){if(refreshBusy||!profile)return;refreshBusy=true;if(!silent)showStatus("Actualisation…");const epoch=sessionEpoch;try{const next=await fetchData();if(epoch!==sessionEpoch)return;db=next;loadedAt=new Date();render();if(!silent)showStatus("Données actualisées.")}catch(x){showStatus("Actualisation impossible : "+x.message,true)}finally{refreshBusy=false}}
 
-async function logout(){try{const{error}=await client.auth.signOut();if(error)throw error;sessionEpoch++;user=null;profile=null;db={};$("modal").close();showLogin();showStatus("Déconnecté.")}catch(x){showStatus(x.message,true)}}
+function startAutoRefresh(){clearInterval(refreshTimer);refreshTimer=setInterval(()=>refresh(true),30000)}
+
+function startRealtime(){stopRealtime();if(!client||!profile)return;
+realtimeChannel=client.channel("stockpro-realtime");
+["products","depots","clients","suppliers","entries","invoice_lines","outputs","transfers","adjustments","profiles","audit_log"].forEach(table=>{
+realtimeChannel.on("postgres_changes",{event:"*",schema:"public",table},()=>scheduleRealtimeRefresh())});
+realtimeChannel.subscribe(status=>{if(status==="SUBSCRIBED")showStatus("Actualisation en temps réel connectée.")})}
+
+function stopRealtime(){clearInterval(realtimeTimer);if(realtimeChannel){client?.removeChannel(realtimeChannel);realtimeChannel=null}}
+
+function scheduleRealtimeRefresh(){clearTimeout(realtimeTimer);realtimeTimer=setTimeout(()=>refresh(true),1500)}
+
+async function logout(){try{const{error}=await client.auth.signOut();if(error)throw error;sessionEpoch++;user=null;profile=null;db={};stopRealtime();clearInterval(refreshTimer);$("modal").close();showLogin();showStatus("Déconnecté.")}catch(x){showStatus(x.message,true)}}
 
 function itemName(type,id){return db[type]?.find(x=>x.id===id)?.name||"—"}
 function enrichedOutputs(){return db.outputs.filter(active).map(o=>{const line=db.invoice_lines.find(i=>i.id===o.invoice_line_id);return{...o,invoice:line?.invoice||"—",invoice_qty:Number(line?.invoice_qty||0),product_id:line?.product_id,client_id:line?.client_id}})}
@@ -111,11 +125,11 @@ return(!filters.q||text.includes(filters.q.toLowerCase()))&&(!filters.depot||[ro
 function filterBar(){return`<div class="toolbar"><input aria-label="Recherche" placeholder="Rechercher…" value="${escapeHTML(filters.q)}" onchange="setFilter('q',this.value)"><select aria-label="Dépôt" onchange="setFilter('depot',this.value)"><option value="">Tous les dépôts</option>${db.depots.map(d=>`<option value="${d.id}" ${d.id===filters.depot?"selected":""}>${escapeHTML(d.name)}</option>`).join("")}</select><input type="date" aria-label="Du" title="Du" value="${escapeHTML(filters.from)}" onchange="setFilter('from',this.value)"><input type="date" aria-label="Au" title="Au" value="${escapeHTML(filters.to)}" onchange="setFilter('to',this.value)"><button onclick="resetFilters()">Effacer les filtres</button></div>`}
 function setFilter(k,v){filters[k]=v;render()}
 function resetFilters(){filters={q:"",depot:"",from:"",to:""};render()}
-function go(destination){page=destination;resetFilters()}
+function go(destination){page=destination;resetFilters();render()}
 
-function render(){if(!profile)return showLogin();if(["audit","settings"].includes(page)&&!admin())page="dashboard";
-$("app").innerHTML=`<div class="shell"><aside><h2>StockPro</h2><nav>${Object.entries(titles).filter(([k])=>admin()||!["audit","settings"].includes(k)).map(([k,v])=>`<button class="${k===page?"active":""}" onclick="go('${k}')">${v}</button>`).join("")}</nav></aside><main><header><div><h1>${titles[page]}</h1><span class="muted">${escapeHTML(profile.name)} · ${admin()?"Administrateur":"Utilisateur"} · Supabase<br>Dernier chargement : ${escapeHTML(loadedAt?.toLocaleString("fr-FR")||"—")}</span></div><div class="actions"><button onclick="refresh()">Actualiser</button>${page!=="settings"?`<button class="primary" onclick="printPage()">Exporter le tableau en PDF</button>`:""}<button onclick="logout()">Déconnexion</button></div></header><div class="notice">Version Supabase : les nouvelles données sont partagées. Les administrateurs peuvent modifier et annuler les mouvements. Les mouvements annulés sont exclus du stock et restent visibles dans les listes. Les anciennes données locales ne sont pas importées.</div><div id="content"></div></main></div>`;
-if(page==="dashboard")showDashboard();else if(page==="inventory")showInventory();else if(page==="audit")showAudit();else if(page==="settings")showSettings();else showList()}
+function render(){if(!profile)return showLogin();if(["audit","settings","accounts"].includes(page)&&!admin())page="dashboard";
+$("app").innerHTML=`<div class="shell"><aside><h2>StockPro</h2><nav>${Object.entries(titles).filter(([k])=>admin()||!["accounts","audit","settings"].includes(k)).map(([k,v])=>`<button class="${k===page?"active":""}" onclick="go('${k}')">${v}</button>`).join("")}</nav></aside><main><header><div><h1>${titles[page]}</h1><span class="muted">${escapeHTML(profile.name)} · ${admin()?"Administrateur":"Utilisateur"} · Supabase<br>Dernier chargement : ${escapeHTML(loadedAt?.toLocaleString("fr-FR")||"—")}</span></div><div class="actions"><button onclick="refresh()">Actualiser</button>${page!=="settings"&&page!=="accounts"?`<button class="primary" onclick="printPage()">Exporter le tableau en PDF</button>`:""}<button onclick="logout()">Déconnexion</button></div></header><div class="notice">Actualisation automatique toutes les 30 secondes. Les changements effectués sur un autre appareil apparaissent aussi automatiquement. Les administrateurs peuvent gérer les comptes, modifier et annuler les mouvements.</div><div id="content"></div></main></div>`;
+if(page==="dashboard")showDashboard();else if(page==="inventory")showInventory();else if(page==="accounts")showAccounts();else if(page==="audit")showAudit();else if(page==="settings")showSettings();else showList()}
 
 function showDashboard(){const inventory=inventoryRows(),entries=db.entries.filter(active).filter(matches),outputs=enrichedOutputs().filter(matches),transfers=db.transfers.filter(active).filter(matches);
 const pending=db.invoice_lines.filter(line=>Number(line.invoice_qty)>delivered(line.id));
@@ -180,16 +194,43 @@ catch(x){showStatus("Annulation impossible : "+x.message,true)}}
 async function deleteReference(type,id){if(!admin()||!referenceTypes.includes(type))return;if(!confirm("Supprimer cet élément ? La base bloquera la suppression s’il est utilisé par un mouvement."))return;
 try{const{data,error}=await client.from(type).delete().eq("id",id).select("id");if(error)throw error;if(!data.length)throw Error("Élément absent ou accès refusé.");showStatus("Suppression confirmée.");await refresh()}catch(x){showStatus("Suppression refusée : "+x.message,true)}}
 
+function showAccounts(){if(!admin())return;
+$("content").innerHTML=`<button class="primary" onclick="createAccount()">+ Créer un compte</button><p class="muted">Les comptes sont gérés dans Supabase. Un administrateur peut créer un compte, changer son rôle et l’activer ou le désactiver.</p>${table(["Nom","E-mail","Rôle","Statut","Actions"],db.profiles.map(p=>[escapeHTML(p.name),escapeHTML(p.email||"—"),p.role==="admin"?"Administrateur":"Utilisateur",p.active?'<span class="active">Actif</span>':'<span class="inactive">Désactivé</span>',p.id===profile.id?'<span class="muted">Votre compte</span>':`<div class="actions"><button onclick="changeRole('${p.id}','${p.role==="admin"?"user":"admin"}')">${p.role==="admin"?"Mettre utilisateur":"Mettre administrateur"}</button><button class="danger" onclick="toggleAccount('${p.id}',${!p.active})">${p.active?"Désactiver":"Activer"}</button></div>`]))}`}
+
+function createAccount(){
+if(!admin())return;
+$("modal").innerHTML=`<h2>Créer un compte</h2><form id="accountForm"><div class="fields"><div><label for="account_name">Nom complet *</label><input id="account_name" name="name" required></div><div><label for="account_email">Adresse e-mail *</label><input id="account_email" name="email" type="email" required></div><div><label for="account_password">Mot de passe *</label><input id="account_password" name="password" type="password" minlength="8" required></div><div><label for="account_role">Rôle *</label><select id="account_role" name="role" required><option value="user">Utilisateur</option><option value="admin">Administrateur</option></select></div></div><p id="accountError" class="error"></p><div class="footer"><button id="accountCancel" type="button">Annuler</button><button id="accountSave" class="primary" type="submit">Créer le compte</button></div></form>`;
+$("modal").showModal();
+$("accountCancel").onclick=()=>$("modal").close();
+$("accountForm").onsubmit=async e=>{e.preventDefault();const button=$("accountSave");button.disabled=true;$("accountError").textContent="";
+const v=Object.fromEntries(new FormData(e.target));
+try{const{error}=await client.rpc("stockpro_create_account",{p_email:v.email.trim(),p_password:v.password,p_name:v.name.trim(),p_role:v.role});if(error)throw error;
+$("modal").close();showStatus("Compte créé. Actualisation…");await refresh();showStatus("Compte créé avec succès.")}
+catch(x){$("accountError").textContent=x.message}
+finally{button.disabled=false}}}
+
+async function changeRole(id,role){
+if(!admin())return;
+if(!confirm(`Changer le rôle de ce compte en ${role==="admin"?"administrateur":"utilisateur"} ?`))return;
+try{const{error}=await client.rpc("stockpro_set_role",{p_user_id:id,p_role:role});if(error)throw error;showStatus("Rôle modifié. Actualisation…");await refresh();showStatus("Rôle modifié avec succès.")}
+catch(x){showStatus("Modification impossible : "+x.message,true)}}
+
+async function toggleAccount(id,nextActive){
+if(!admin())return;
+if(!confirm(nextActive?"Activer ce compte ?":"Désactiver ce compte ? Il ne pourra plus se connecter."))return;
+try{const{error}=await client.rpc("stockpro_set_active",{p_user_id:id,p_active:nextActive});if(error)throw error;showStatus("Statut modifié. Actualisation…");await refresh();showStatus(nextActive?"Compte activé.":"Compte désactivé.")}
+catch(x){showStatus("Modification impossible : "+x.message,true)}}
+
 function showAudit(){$("content").innerHTML=`<p class="muted">Historique serveur des mouvements créés, modifiés et annulés. Les modifications des listes de référence ne sont pas encore journalisées.</p>${table(["Date","Utilisateur (UUID)","Action","Module","Référence","Motif","Détail"],db.audit_log.slice().sort((a,b)=>b.created_at.localeCompare(a.created_at)).map(r=>[escapeHTML(new Date(r.created_at).toLocaleString("fr-FR")),escapeHTML(r.actor_id),escapeHTML(r.action),escapeHTML(r.entity_type),escapeHTML(r.entity_id),escapeHTML(r.reason),`<button onclick="auditDetail('${r.id}')">Voir</button>`]))}`}
 
 function auditDetail(id){const record=db.audit_log.find(r=>r.id===id);$("modal").innerHTML=`<h2>Détail de l’opération</h2><pre style="white-space:pre-wrap;overflow-wrap:anywhere">${escapeHTML(JSON.stringify(record,null,2))}</pre><button id="closeAudit">Fermer</button>`;$("modal").oncancel=null;$("modal").showModal();$("closeAudit").onclick=()=>$("modal").close()}
 
-function printPage(){if(!profile||page==="settings")return;const copy=$("content").cloneNode(true);copy.querySelectorAll("button,input,select,.toolbar").forEach(e=>e.remove());
+function printPage(){if(!profile||["settings","accounts"].includes(page))return;const copy=$("content").cloneNode(true);copy.querySelectorAll("button,input,select,.toolbar").forEach(e=>e.remove());
 copy.querySelectorAll("table").forEach(item=>{const last=item.querySelector("thead tr")?.lastElementChild;if(["Actions","Détail"].includes(last?.textContent))item.querySelectorAll("tr").forEach(row=>row.lastElementChild?.remove())});
 const active=filters.q||filters.depot||filters.from||filters.to;
 $("print").innerHTML=`<h1>StockPro</h1><h2>${escapeHTML(titles[page])}</h2><p>Édité par ${escapeHTML(profile.name)} le ${escapeHTML(new Date().toLocaleString("fr-FR"))}.</p><p>Données chargées le ${escapeHTML(loadedAt?.toLocaleString("fr-FR")||"—")}.</p><p>${active?"Tous les résultats correspondant aux filtres actifs.":"Toutes les lignes de la rubrique, sans filtre."}</p>${active?`<p>Recherche : ${escapeHTML(filters.q||"—")} · Dépôt : ${escapeHTML(filters.depot?itemName("depots",filters.depot):"Tous")} · Du : ${escapeHTML(filters.from||"—")} · Au : ${escapeHTML(filters.to||"—")}</p>`:""}${copy.innerHTML}<p style="margin-top:30px">Signature / cachet : __________________________</p>`;window.print()}
 
-function showSettings(){$("content").innerHTML=`<div class="vertical">${panel("Connexion et données partagées",`<p>Les données sont enregistrées dans Supabase. Le même compte peut être utilisé sur les appareils autorisés. Une connexion Internet est nécessaire.</p><p>Cliquez sur Actualiser pour récupérer les changements faits sur un autre appareil. L’actualisation automatique n’est pas encore activée.</p>`)}${panel("Modification et annulation",`<p>Les administrateurs peuvent modifier ou annuler une entrée, une sortie, un transfert ou un comptage.</p><p>Un mouvement annulé reste visible dans les listes et dans l’historique, mais il est exclu du stock, des totaux et des balances.</p>`)}${panel("Limites actuelles",`<p>L’import des anciennes données, la gestion des comptes depuis l’application et l’actualisation automatique restent à ajouter.</p><p>Les modifications des listes de référence ne sont pas encore journalisées.</p>`)}</div>`}
+function showSettings(){$("content").innerHTML=`<div class="vertical">${panel("Actualisation automatique",`<p>Les données sont actualisées automatiquement toutes les 30 secondes. Les changements effectués sur un autre appareil apparaissent aussi grâce à l’actualisation en temps réel.</p><p>Vous pouvez toujours cliquer sur Actualiser pour forcer une mise à jour.</p>`)}${panel("Comptes et accès",`<p>Les administrateurs peuvent créer des comptes, définir le rôle administrateur ou utilisateur, et activer ou désactiver un compte.</p><p>Un compte désactivé ne peut plus se connecter.</p>`)}${panel("Limites actuelles",`<p>L’import des anciennes données reste à ajouter. Les modifications des listes de référence ne sont pas encore journalisées.</p>`)}</div>`}
 
 (async()=>{try{if(!window.supabase)throw Error("Chargement de la bibliothèque Supabase impossible. Vérifiez votre connexion puis rechargez.");client=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLIC_KEY);$("app").innerHTML='<main><h1>StockPro</h1><p>Connexion à Supabase…</p></main>';await openSession()}catch(x){if(client)showLogin();else $("app").innerHTML='<main><h1>StockPro</h1></main>';showStatus(x.message,true)}})();
 </script>
