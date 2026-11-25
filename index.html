@@ -48,6 +48,7 @@ dialog::backdrop{background:#102c4099}.fields{display:grid;grid-template-columns
 
 const SUPABASE_URL="https://qcrcuncmgfxojdhcdtno.supabase.co";
 const SUPABASE_PUBLIC_KEY="sb_publishable_5Gugsp17R5waoCb_osr1Kg_v8daehTW";
+const CREATE_USER_FUNCTION="smart-worker";
 
 const $=id=>document.getElementById(id);
 const escapeHTML=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -204,8 +205,19 @@ $("modal").showModal();
 $("accountCancel").onclick=()=>$("modal").close();
 $("accountForm").onsubmit=async e=>{e.preventDefault();const button=$("accountSave");button.disabled=true;$("accountError").textContent="";
 const v=Object.fromEntries(new FormData(e.target));
-try{const{error}=await client.rpc("stockpro_create_account",{p_email:v.email.trim(),p_password:v.password,p_name:v.name.trim(),p_role:v.role});if(error)throw error;
-$("modal").close();showStatus("Compte créé. Actualisation…");await refresh();showStatus("Compte créé avec succès.")}
+try{
+const{data,error}=await client.functions.invoke(CREATE_USER_FUNCTION,{
+body:{
+email:v.email.trim(),
+password:v.password,
+name:v.name.trim(),
+role:v.role
+}
+});
+if(error)throw error;
+if(data?.error)throw new Error(data.error);
+$("modal").close();showStatus("Compte créé. Actualisation…");await refresh();showStatus("Compte créé avec succès.")
+}
 catch(x){$("accountError").textContent=x.message}
 finally{button.disabled=false}}}
 
