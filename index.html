@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>StockPro — Supabase</title>
+<title>StockPro</title>
 
 <style>
 :root{--nav:#123247;--green:#087f68;--blue:#2c6397;--background:#f1f5f9;--border:#cddae5;--text:#20394c}
@@ -31,7 +31,7 @@ dialog::backdrop{background:#102c4099}.fields{display:grid;grid-template-columns
 #print table{width:100%;table-layout:fixed;white-space:normal;font-size:8px}#print td,#print th{padding:5px 3px;white-space:normal;overflow-wrap:anywhere;vertical-align:top}
 #print th{color:black;background:#eee}#print thead{display:table-header-group}#print tr{break-inside:avoid;page-break-inside:avoid}
 #print .vertical{display:block}#print .card{border:0;border-radius:0;padding:6px;margin:8px 0}#print .metric strong{font-size:18px}
-#print h1{font-size:20px}#print h2{font-size:16px}@page{size:A4 landscape;margin:8mm}}
+#print h1{font-size:20px}#print h2{font-size:16px}@page{size:A4 landscape;margin:0}#print{padding:10mm}}
 </style>
 </head>
 
@@ -147,7 +147,7 @@ ${panel("Expirations à surveiller",table(["Produit","Lot","Dépôt","Expiration
 function fieldValue(type,key,row){const def=schemas[type].find(f=>f[0]===key);if(referenceTypes.includes(def?.[2]))return itemName(def[2],row[key]);return row[key]??""}
 
 function showList(){const type=page;const rows=(type==="outputs"?enrichedOutputs():db[type]).filter(matches);const defs=schemas[type];const isRef=referenceTypes.includes(type);const canAdd=isRef?admin():true;const canManage=admin();
-$("content").innerHTML=`${canAdd?`<button class="primary" onclick="editRecord('${type}')">+ Ajouter</button>`:""}${filterBar()}<p class="muted">${rows.length} ligne(s). Le PDF contient tout le tableau affiché.</p>${table([...defs.map(f=>f[1]),...(type==="outputs"?["Livré cumulé","Balance actuelle"]:[]),"État",...(canManage?["Actions"]:[])],rows.map(r=>[...defs.map(f=>escapeHTML(fieldValue(type,f[0],r))),...(type==="outputs"?[number(delivered(r.invoice_line_id)),number(r.invoice_qty-delivered(r.invoice_line_id))]:[]),r.status==="cancelled"?'<span class="cancelled">Annulé</span>':"Actif",...(canManage?[r.status==="cancelled"?`<span class="cancelled">Annulé</span>`:`<div class="actions"><button onclick="editRecord('${type}','${r.id}')">Modifier</button><button class="danger" onclick="cancelMovement('${type}','${r.id}')">Annuler</button></div>`]:[])]))}`}
+$("content").innerHTML=`${canAdd?`<button class="primary" onclick="editRecord('${type}')">+ Ajouter</button>`:""}${filterBar()}<p class="muted">${rows.length} ligne(s).</p>${table([...defs.map(f=>f[1]),...(type==="outputs"?["Livré cumulé","Balance actuelle"]:[]),"État",...(canManage?["Actions"]:[])],rows.map(r=>[...defs.map(f=>escapeHTML(fieldValue(type,f[0],r))),...(type==="outputs"?[number(delivered(r.invoice_line_id)),number(r.invoice_qty-delivered(r.invoice_line_id))]:[]),r.status==="cancelled"?'<span class="cancelled">Annulé</span>':"Actif",...(canManage?[r.status==="cancelled"?`<span class="cancelled">Annulé</span>`:`<div class="actions"><button onclick="editRecord('${type}','${r.id}')">Modifier</button><button class="danger" onclick="cancelMovement('${type}','${r.id}')">Annuler</button></div>`]:[])]))}`}
 
 function showInventory(){$("content").innerHTML=`${admin()?`<button class="primary" onclick="editRecord('adjustments')">Comptage / ajustement</button>`:""}<p class="muted">Le stock est dérivé des mouvements actifs. Les comptages annulés sont exclus du calcul.</p>${filterBar()}${table(["Produit","Dépôt","Stock","Unité","Seuil","État"],inventoryRows().map(r=>[escapeHTML(itemName("products",r.product_id)),escapeHTML(itemName("depots",r.depot_id)),number(r.qty),escapeHTML(r.unit),number(r.min),r.qty<=0?"Rupture":r.qty<=r.min?"Stock bas":"Disponible"]))}<h2>Historique des comptages</h2>${table(["Date","Produit","Dépôt","Compté","Écart","Motif","État","Actions"],db.adjustments.filter(matches).map(r=>[escapeHTML(r.date),escapeHTML(itemName("products",r.product_id)),escapeHTML(itemName("depots",r.depot_id)),number(r.counted_qty),number(r.delta),escapeHTML(r.note),r.status==="cancelled"?'<span class="cancelled">Annulé</span>':"Actif",admin()&&active(r)?`<div class="actions"><button onclick="editRecord('adjustments','${r.id}')">Modifier</button><button class="danger" onclick="cancelMovement('adjustments','${r.id}')">Annuler</button></div>`:""]))}`}
 
@@ -237,10 +237,9 @@ function showAudit(){$("content").innerHTML=`<p class="muted">Historique serveur
 
 function auditDetail(id){const record=db.audit_log.find(r=>r.id===id);$("modal").innerHTML=`<h2>Détail de l’opération</h2><pre style="white-space:pre-wrap;overflow-wrap:anywhere">${escapeHTML(JSON.stringify(record,null,2))}</pre><button id="closeAudit">Fermer</button>`;$("modal").oncancel=null;$("modal").showModal();$("closeAudit").onclick=()=>$("modal").close()}
 
-function printPage(){if(!profile||["settings","accounts"].includes(page))return;const copy=$("content").cloneNode(true);copy.querySelectorAll("button,input,select,.toolbar").forEach(e=>e.remove());
+function printPage(){if(!profile||["settings","accounts"].includes(page))return;const copy=$("content").cloneNode(true);copy.querySelectorAll("button,input,select,.toolbar,.notice,.muted").forEach(e=>e.remove());
 copy.querySelectorAll("table").forEach(item=>{const last=item.querySelector("thead tr")?.lastElementChild;if(["Actions","Détail"].includes(last?.textContent))item.querySelectorAll("tr").forEach(row=>row.lastElementChild?.remove())});
-const active=filters.q||filters.depot||filters.from||filters.to;
-$("print").innerHTML=`<h1>StockPro</h1><h2>${escapeHTML(titles[page])}</h2><p>Édité par ${escapeHTML(profile.name)} le ${escapeHTML(new Date().toLocaleString("fr-FR"))}.</p><p>Données chargées le ${escapeHTML(loadedAt?.toLocaleString("fr-FR")||"—")}.</p><p>${active?"Tous les résultats correspondant aux filtres actifs.":"Toutes les lignes de la rubrique, sans filtre."}</p>${active?`<p>Recherche : ${escapeHTML(filters.q||"—")} · Dépôt : ${escapeHTML(filters.depot?itemName("depots",filters.depot):"Tous")} · Du : ${escapeHTML(filters.from||"—")} · Au : ${escapeHTML(filters.to||"—")}</p>`:""}${copy.innerHTML}<p style="margin-top:30px">Signature / cachet : __________________________</p>`;window.print()}
+$("print").innerHTML=`<h1>StockPro</h1><h2>${escapeHTML(titles[page])}</h2><p>Édité par ${escapeHTML(profile.name)} le ${escapeHTML(new Date().toLocaleString("fr-FR"))}.</p>${copy.innerHTML}<p style="margin-top:30px">Signature / cachet : __________________________</p>`;window.print()}
 
 function showSettings(){$("content").innerHTML=`<div class="vertical">${panel("Actualisation automatique",`<p>Les données sont actualisées automatiquement toutes les 30 secondes. Les changements effectués sur un autre appareil apparaissent aussi grâce à l’actualisation en temps réel.</p><p>Vous pouvez toujours cliquer sur Actualiser pour forcer une mise à jour.</p>`)}${panel("Comptes et accès",`<p>Les administrateurs peuvent créer des comptes, définir le rôle administrateur ou utilisateur, et activer ou désactiver un compte.</p><p>Un compte désactivé ne peut plus se connecter.</p>`)}${panel("Limites actuelles",`<p>L’import des anciennes données reste à ajouter. Les modifications des listes de référence ne sont pas encore journalisées.</p>`)}</div>`}
 
